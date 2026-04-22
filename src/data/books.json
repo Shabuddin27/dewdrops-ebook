@@ -1,0 +1,149 @@
+[
+  {
+    "id": 1,
+    "title": "Atomic Habits",
+    "category": "Self-Help",
+    "cover": "/public/covers/Atomic Habit.jpg",
+    "chapters": [
+      {
+        "title": "Chapter 1: Introduction",
+        "pages": [
+          "Every action you take is a vote for the type of person you wish to become. You don’t become a reader by finishing one book—you become a reader by reading regularly. Identity is built through repeated evidence...",
+          "In this book, you will learn how habits are formed, how they can be changed...",
+          "Change can feel slow, almost invisible at first...",
+          "Habits are not about achieving perfection..."
+        ]
+      },
+      {
+        "title": "Chapter 2: The Power of Small Habits",
+        "pages": [
+          "Success is rarely the result of one defining moment...",
+          "The key to building habits is not intensity...",
+          "Your environment plays a powerful role...",
+          "Habits are not about achieving perfection..."
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "The Silent Forest",
+    "category": "Fantasy",
+    "cover": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+    "chapters": [
+      {
+        "title": "Chapter 1: The Awakening",
+        "pages": [
+          "The forest had always been silent...",
+          "A soft wind moved through the trees...",
+          "Elara stood frozen in place..."
+        ]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Deep Work",
+    "category": "Self-Help",
+    "cover": "https://images.unsplash.com/photo-1512820790803-83ca734da794",
+    "chapters": [
+      {
+        "title": "Chapter 1: Focus Matters",
+        "pages": [
+          "Deep work is the ability to focus without distraction on cognitively demanding tasks...",
+          "In a world full of distractions, the ability to concentrate is becoming rare...",
+          "To produce at your peak level, you must work for extended periods with full concentration..."
+        ]
+      },
+      {
+        "title": "Chapter 2: Eliminate Distractions",
+        "pages": [
+          "Distractions are the enemy of productivity...",
+          "Create an environment where focus is natural...",
+          "Remove unnecessary inputs and protect your time..."
+        ]
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "The Midnight Library",
+    "category": "Fiction",
+    "cover": "https://images.unsplash.com/photo-1495446815901-a7297e633e8d",
+    "chapters": [
+      {
+        "title": "Chapter 1: Between Life and Death",
+        "pages": [
+          "Somewhere beyond life, there exists a library...",
+          "Each book represents a different life you could have lived...",
+          "Nora finds herself standing between regret and possibility..."
+        ]
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Think and Grow Rich",
+    "category": "Self-Help",
+    "cover": "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f",
+    "chapters": [
+      {
+        "title": "Chapter 1: Desire",
+        "pages": [
+          "Desire is the starting point of all achievement...",
+          "Strong desire fuels persistence and determination...",
+          "Success begins with a clear goal and burning desire..."
+        ]
+      },
+      {
+        "title": "Chapter 2: Faith",
+        "pages": [
+          "Faith is the visualization of and belief in attainment of desire...",
+          "Confidence builds through repeated affirmation...",
+          "Your thoughts shape your reality..."
+        ]
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "title": "The Alchemist",
+    "category": "Fiction",
+    "cover": "https://images.unsplash.com/photo-1507842217343-583bb7270b66",
+    "chapters": [
+      {
+        "title": "Chapter 1: The Journey Begins",
+        "pages": [
+          "Santiago dreamed of treasure hidden near the pyramids...",
+          "He decided to follow his dream despite uncertainty...",
+          "The journey teaches him about life and purpose..."
+        ]
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "title": "The Lost Kingdom",
+    "category": "Fantasy",
+    "cover": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+    "chapters": [
+      {
+        "title": "Chapter 1: The Hidden Map",
+        "pages": [
+          "The map was hidden beneath the old stone...",
+          "A forgotten kingdom waited to be discovered...",
+          "Only the brave could uncover its secrets..."
+        ]
+      },
+      {
+        "title": "Chapter 2: The Journey",
+        "pages": [
+          "The path was dangerous and filled with uncertainty...",
+          "Each step revealed more about the kingdom...",
+          "Legends slowly became reality..."
+        ]
+      }
+    ]
+  }
+
+]
