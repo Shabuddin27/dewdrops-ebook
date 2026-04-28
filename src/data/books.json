@@ -1,12 +1,13 @@
 [
   {
     "id": 1,
-    "title": "Atomic Habits",
-    "category": "Self-Help",
-    "cover": "/public/covers/Atomic Habit.jpg",
+    "title": "Before They Became: A Tale of Banjhakri and Lamlamey",
+    "category": "Folklore",
+    "cover": "/covers/Before They Became - A Tale of Banjhakri and Lamlamey.PNG",
     "chapters": [
       {
-        "title": "Chapter 1: Introduction",
+        "title": "Chapter 1: Of Light and Love",
+        "introImage": "/covers/chapter1.png",
         "pages": [
           "Every action you take is a vote for the type of person you wish to become. You don’t become a reader by finishing one book—you become a reader by reading regularly. Identity is built through repeated evidence...",
           "In this book, you will learn how habits are formed, how they can be changed...",
@@ -16,6 +17,7 @@
       },
       {
         "title": "Chapter 2: The Power of Small Habits",
+        "introImage": "/covers/Chapter 2.png",
         "pages": [
           "Success is rarely the result of one defining moment...",
           "The key to building habits is not intensity...",
@@ -30,6 +32,7 @@
     "title": "The Silent Forest",
     "category": "Fantasy",
     "cover": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+    "illustration": "https://images.unsplash.com/photo-1448375240586-882707db888b",
     "chapters": [
       {
         "title": "Chapter 1: The Awakening",
@@ -46,6 +49,7 @@
     "title": "Deep Work",
     "category": "Self-Help",
     "cover": "https://images.unsplash.com/photo-1512820790803-83ca734da794",
+    "illustration": "https://images.unsplash.com/photo-1456324504439-367cee3b3c32",
     "chapters": [
       {
         "title": "Chapter 1: Focus Matters",
@@ -70,6 +74,7 @@
     "title": "The Midnight Library",
     "category": "Fiction",
     "cover": "https://images.unsplash.com/photo-1495446815901-a7297e633e8d",
+    "illustration": "https://images.unsplash.com/photo-1507842217343-583bb7270b66",
     "chapters": [
       {
         "title": "Chapter 1: Between Life and Death",
@@ -86,6 +91,7 @@
     "title": "Think and Grow Rich",
     "category": "Self-Help",
     "cover": "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f",
+    "illustration": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7",
     "chapters": [
       {
         "title": "Chapter 1: Desire",
@@ -110,6 +116,7 @@
     "title": "The Alchemist",
     "category": "Fiction",
     "cover": "https://images.unsplash.com/photo-1507842217343-583bb7270b66",
+    "illustration": "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
     "chapters": [
       {
         "title": "Chapter 1: The Journey Begins",
@@ -126,6 +133,7 @@
     "title": "The Lost Kingdom",
     "category": "Fantasy",
     "cover": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+    "illustration": "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc",
     "chapters": [
       {
         "title": "Chapter 1: The Hidden Map",
@@ -145,5 +153,4 @@
       }
     ]
   }
-
 ]
