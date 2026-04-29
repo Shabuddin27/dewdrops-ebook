@@ -3,13 +3,43 @@ import { useNavigate } from "react-router-dom";
 import books from "../data/books.json";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+const getRecentReading = () => {
+  let saved = [];
+  try {
+    saved = JSON.parse(localStorage.getItem("reading-progress")) || [];
+  } catch {
+    saved = [];
+  }
+  if (!Array.isArray(saved)) return [];
+  return saved
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .map((p) => ({
+      ...p,
+      book: books.find((b) => b.id === p.bookId),
+    }))
+    .filter((p) => p.book);
+};
+
+const getChapterPageCount = (book, chapterIndex) => {
+  const chapter = book?.chapters?.[chapterIndex];
+  if (!chapter) return 1;
+  if (Array.isArray(chapter.pages)) return Math.max(chapter.pages.length, 1);
+  return Math.max(Math.ceil((chapter.content || "").length / 1400), 1);
+};
+
+const getProgressPercent = (item) => {
+  const pageCount = getChapterPageCount(item.book, item.chapter);
+  const currentPage = Math.min(Math.max(item.page || 0, 0), pageCount - 1);
+  return Math.min(((currentPage + 1) / pageCount) * 100, 100);
+};
+
 function Home() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("asc");
-  const [recent, setRecent] = useState([]);
+  const [recent, setRecent] = useState(getRecentReading);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // carousel state
@@ -40,19 +70,6 @@ function Home() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // load recent reading
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("reading-progress")) || [];
-    const mapped = saved
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map((p) => ({
-        ...p,
-        book: books.find((b) => b.id === p.bookId),
-      }))
-      .filter((p) => p.book);
-    setRecent(mapped);
   }, []);
 
   // update arrow visibility
@@ -99,7 +116,13 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // remove from continue reading
   const removeItem = (bookId) => {
-    const saved = JSON.parse(localStorage.getItem("reading-progress")) || [];
+    let saved = [];
+    try {
+      saved = JSON.parse(localStorage.getItem("reading-progress")) || [];
+    } catch {
+      saved = [];
+    }
+    if (!Array.isArray(saved)) saved = [];
     const updated = saved.filter((p) => p.bookId !== bookId);
     localStorage.setItem("reading-progress", JSON.stringify(updated));
     setRecent(
@@ -299,13 +322,7 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
                           <div className="mt-3 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
-                              style={{
-                                width: `${
-                                  (item.page /
-                                    item.book.chapters[item.chapter].pages.length) *
-                                  100
-                                }%`,
-                              }}
+                              style={{ width: `${getProgressPercent(item)}%` }}
                             />
                           </div>
                         </div>
