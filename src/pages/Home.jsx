@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import books from "../data/books.json";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Search, X } from "lucide-react";
 
 const getRecentReading = () => {
   let saved = [];
@@ -41,6 +41,8 @@ function Home() {
   const [sort, setSort] = useState("asc");
   const [recent, setRecent] = useState(getRecentReading);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
 
   // carousel state
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -50,6 +52,8 @@ function Home() {
   const searchRef = useRef(null);
   const inputRef = useRef(null);
   const scrollRef = useRef(null);
+  const categoryRef = useRef(null);
+  const sortRef = useRef(null);
 
   // drag refs
   const isDown = useRef(false);
@@ -61,11 +65,17 @@ function Home() {
     if (searchOpen && inputRef.current) inputRef.current.focus();
   }, [searchOpen]);
 
-  // close search on outside click
+  // close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setSearchOpen(false);
+      }
+      if (categoryRef.current && !categoryRef.current.contains(e.target)) {
+        setCategoryOpen(false);
+      }
+      if (sortRef.current && !sortRef.current.contains(e.target)) {
+        setSortOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -112,7 +122,7 @@ function Home() {
     scrollRef.current.scrollLeft = scrollLeftStart.current - walk;
   };
 
-const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // remove from continue reading
   const removeItem = (bookId) => {
@@ -136,13 +146,18 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
   };
 
   // filters
-  const categories = [...new Set(books.map((b) => b.category))];
+  const categories = ["All Genres", ...new Set(books.map((b) => b.category))];
+  
+  const sortOptions = [
+    { value: "asc", label: "A → Z" },
+    { value: "desc", label: "Z → A" },
+  ];
 
   let filteredBooks = books.filter((b) =>
     b.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (category) {
+  if (category && category !== "All Genres") {
     filteredBooks = filteredBooks.filter((b) => b.category === category);
   }
 
@@ -161,47 +176,63 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
           .slice(0, 5)
       : [];
 
+  const getCategoryLabel = () => {
+    if (!category) return "All Genres";
+    return category;
+  };
+
+  const getSortLabel = () => {
+    return sortOptions.find(opt => opt.value === sort)?.label || "A → Z";
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* SEARCH */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-        <div ref={searchRef} className="relative w-full md:w-auto">
-          <div className="flex items-center bg-white rounded-2xl shadow-sm border p-1">
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="p-3 text-xl"
-            >
-              🔍
-            </button>
+    <div className="w-full px-3 pt-2 pb-12 mx-auto sm:px-5 md:px-7 lg:px-10">
+      {/* SEARCH & FILTERS - Full Width Row */}
+      <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between md:gap-5">
+        {/* Search Bar - Flexible */}
+        <div ref={searchRef} className="relative flex-1 max-w-md">
+          <div className="flex items-center w-full px-3 py-2 bg-white border border-gray-200 rounded-xl focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all sm:px-4 sm:py-2.5">
+            <Search size={16} className="text-gray-400 sm:size-[18px]" />
             <input
               ref={inputRef}
               type="text"
-              placeholder="Find your next story..."
+              placeholder="Search books..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => setSearchOpen(true)}
-              className="bg-transparent outline-none px-2 w-full md:w-64"
+              className="flex-1 ml-2 text-sm bg-transparent outline-none placeholder:text-gray-400 sm:text-base"
             />
+            {search && (
+              <button 
+                onClick={() => setSearch("")}
+                className="p-0.5 rounded-full hover:bg-gray-100"
+              >
+                <X size={12} className="text-gray-400 sm:size-[14px]" />
+              </button>
+            )}
           </div>
 
+          {/* Search Suggestions */}
           {searchOpen && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
+            <div className="absolute left-0 right-0 z-50 mt-2 overflow-hidden bg-white border border-gray-100 shadow-lg rounded-xl top-full">
               {suggestions.map((book) => (
                 <div
                   key={book.id}
-                  onClick={() => navigate(`/reader/${book.id}`)}
-                  className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    navigate(`/reader/${book.id}`);
+                    setSearchOpen(false);
+                    setSearch("");
+                  }}
+                  className="flex items-center gap-3 p-2 transition-colors cursor-pointer hover:bg-gray-50 sm:p-3"
                 >
                   <img
                     src={book.cover}
-                    className="w-10 h-14 rounded-lg"
+                    className="object-cover h-10 rounded-md w-7 sm:w-8 sm:h-11"
                     alt=""
                   />
                   <div>
-                    <p className="text-sm font-semibold">{book.title}</p>
-                    <p className="text-xs text-gray-400">
-                      {book.category}
-                    </p>
+                    <p className="text-xs font-medium sm:text-sm">{book.title}</p>
+                    <p className="text-[10px] text-gray-400 sm:text-xs">{book.category}</p>
                   </div>
                 </div>
               ))}
@@ -209,71 +240,106 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
           )}
         </div>
 
-        <div className="flex gap-3 w-full md:w-auto">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="flex-1 md:w-48 p-3 rounded-2xl bg-white"
-          >
-            <option value="">All Genres</option>
-            {categories.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+        {/* Filter Row - Compact */}
+        <div className="flex gap-2">
+          {/* Category Dropdown */}
+          <div ref={categoryRef} className="relative">
+            <button
+              onClick={() => {
+                setCategoryOpen(!categoryOpen);
+                setSortOpen(false);
+              }}
+              className="flex items-center gap-1 px-2.5 py-2 text-xs font-medium bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
+            >
+              <span className="hidden xs:inline">Genre</span>
+              <span className="max-w-[80px] truncate xs:max-w-[100px]">{getCategoryLabel()}</span>
+              <ChevronDown size={12} className={`transition-transform sm:size-[14px] ${categoryOpen ? "rotate-180" : ""}`} />
+            </button>
 
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="p-3 rounded-2xl bg-white"
-          >
-            <option value="asc">A-Z</option>
-            <option value="desc">Z-A</option>
-          </select>
+            {categoryOpen && (
+              <div className="absolute right-0 z-50 mt-1 overflow-hidden bg-white border border-gray-100 shadow-lg rounded-xl min-w-[130px] sm:min-w-[140px]">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      setCategory(c === "All Genres" ? "" : c);
+                      setCategoryOpen(false);
+                    }}
+                    className={`block w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-gray-50 sm:px-4 sm:py-2 sm:text-sm
+                      ${(!category && c === "All Genres") || category === c ? "text-blue-600 bg-blue-50" : "text-gray-700"}`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div ref={sortRef} className="relative">
+            <button
+              onClick={() => {
+                setSortOpen(!sortOpen);
+                setCategoryOpen(false);
+              }}
+              className="flex items-center gap-1 px-2.5 py-2 text-xs font-medium bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
+            >
+              <span className="hidden xs:inline">Sort</span>
+              <span>{getSortLabel()}</span>
+              <ChevronDown size={12} className={`transition-transform sm:size-[14px] ${sortOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {sortOpen && (
+              <div className="absolute right-0 z-50 mt-1 overflow-hidden bg-white border border-gray-100 shadow-lg rounded-xl min-w-[90px] sm:min-w-[100px]">
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setSort(opt.value);
+                      setSortOpen(false);
+                    }}
+                    className={`block w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-gray-50 sm:px-4 sm:py-2 sm:text-sm
+                      ${sort === opt.value ? "text-blue-600 bg-blue-50" : "text-gray-700"}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* CONTINUE READING — NETFLIX STYLE */}
       {recent.length > 0 && (
-        <section className="mb-16 relative group">
-          <h2 className="text-xl font-serif font-bold mb-6">
+        <section className="relative mb-6 group sm:mb-8">
+          <h2 className="mb-3 text-base font-semibold tracking-tight sm:text-lg md:mb-4">
             Continue Reading
           </h2>
 
           {/* LEFT ARROW */}
-                  {canScrollLeft && (
+          {canScrollLeft && (
             <button
               onClick={() =>
                 scrollRef.current.scrollBy({ left: -260, behavior: "smooth" })
               }
-              className="absolute left-1 top-1/2 -translate-y-1/2 z-20
-              w-12 h-12 flex items-center justify-center
-              rounded-full bg-white/80 backdrop-blur-md
-              shadow-xl border border-gray-200
-              opacity-0 group-hover:opacity-100
-              hover:scale-110 hover:bg-white
-              transition-all duration-300"
+              className="absolute z-20 flex items-center justify-center w-6 h-6 transition-all duration-300 -translate-y-1/2 border border-gray-200 rounded-full shadow-lg opacity-0 -left-2 top-1/2 bg-white/90 backdrop-blur-sm group-hover:opacity-100 hover:scale-110 hover:bg-white sm:w-8 sm:h-8 md:w-10 md:h-10 lg:-left-3"
             >
-              <ChevronLeft size={22} className="text-gray-700" />
+              <ChevronLeft size={14} className="text-gray-600 sm:size-[16px] md:size-[18px]" />
             </button>
           )}
 
           {/* RIGHT ARROW */}
-                {canScrollRight && (
-          <button
-            onClick={() =>
-              scrollRef.current.scrollBy({ left: 260, behavior: "smooth" })
-            }
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-20
-            w-12 h-12 flex items-center justify-center
-            rounded-full bg-white/80 backdrop-blur-md
-            shadow-xl border border-gray-200
-            opacity-0 group-hover:opacity-100
-            hover:scale-110 hover:bg-white
-            transition-all duration-300"
-          >
-            <ChevronRight size={22} className="text-gray-700" />
-          </button>
-        )}
+          {canScrollRight && (
+            <button
+              onClick={() =>
+                scrollRef.current.scrollBy({ left: 260, behavior: "smooth" })
+              }
+              className="absolute z-20 flex items-center justify-center w-6 h-6 transition-all duration-300 -translate-y-1/2 border border-gray-200 rounded-full shadow-lg opacity-0 -right-2 top-1/2 bg-white/90 backdrop-blur-sm group-hover:opacity-100 hover:scale-110 hover:bg-white sm:w-8 sm:h-8 md:w-10 md:h-10 lg:-right-3"
+            >
+              <ChevronRight size={14} className="text-gray-600 sm:size-[16px] md:size-[18px]" />
+            </button>
+          )}
 
           {/* SCROLL AREA */}
           <div
@@ -282,9 +348,7 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
             onMouseLeave={handleMouseLeave}
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
-            className="flex gap-6 overflow-hidden pb-6 pt-2 
-            no-scrollbar snap-x snap-mandatory scroll-smooth px-12
-            cursor-grab active:cursor-grabbing"
+            className="flex gap-2 pb-3 overflow-hidden no-scrollbar snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing sm:gap-3"
           >
             {recent.slice(0, 5).map(
               (item, i) =>
@@ -294,34 +358,29 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
                     onMouseEnter={() => setHoveredIndex(i)}
                     onMouseLeave={() => setHoveredIndex(null)}
                     onClick={() => navigate(`/reader/${item.bookId}`)}
-                    className="relative min-w-[240px] snap-start group cursor-pointer 
-                    transition-transform duration-300 hover:-translate-y-2 hover:scale-[1.03]"
+                    className="relative min-w-[160px] snap-start group cursor-pointer transition-all duration-300 hover:-translate-y-1 sm:min-w-[180px] md:min-w-[200px] lg:min-w-[220px]"
                   >
-                    <div className="bg-white/80 backdrop-blur-md rounded-2xl p-3 
-                    shadow-[0_8px_25px_rgba(0,0,0,0.08)] 
-                    hover:shadow-[0_15px_40px_rgba(0,0,0,0.15)] 
-                    transition-all duration-300">
+                    <div className="p-1.5 transition-all bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md sm:p-2">
                       
-                      <div className="flex gap-3">
+                      <div className="flex gap-2">
                         <img
                           src={item.book.cover}
-                          className="w-14 h-20 object-cover rounded-md shadow-sm 
-                          group-hover:scale-105 transition duration-300"
+                          className="object-cover h-12 rounded-md shadow-sm w-9 sm:w-10 sm:h-14"
                           alt=""
                         />
 
-                        <div className="flex-1">
-                          <h3 className="text-sm font-semibold leading-tight line-clamp-2 max-w-[200px]">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-[11px] font-medium leading-tight line-clamp-2 sm:text-xs">
                             {item.book.title}
                           </h3>
 
-                          <p className="text-xs text-gray-400 mt-1">
-                            Ch. {item.chapter + 1} • Pg. {item.page + 1}
+                          <p className="mt-0.5 text-[9px] text-gray-400 sm:mt-1 sm:text-[10px]">
+                            Ch {item.chapter + 1} • Pg {item.page + 1}
                           </p>
 
-                          <div className="mt-3 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-1 mt-1 overflow-hidden bg-gray-100 rounded-full sm:mt-1.5">
                             <div
-                              className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
+                              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
                               style={{ width: `${getProgressPercent(item)}%` }}
                             />
                           </div>
@@ -335,8 +394,8 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
                         e.stopPropagation();
                         removeItem(item.bookId);
                       }}
-                      className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs 
-                              bg-white/80 transition hover:bg-red-500 hover:text-white
+                      className={`absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white shadow-md flex items-center justify-center text-[10px] 
+                              transition hover:bg-red-500 hover:text-white sm:w-5 sm:h-5 sm:text-xs
                               ${hoveredIndex === i ? "opacity-100" : "opacity-0"}`}
                     >
                       ✕
@@ -350,35 +409,56 @@ const [hoveredIndex, setHoveredIndex] = useState(null);
 
       {/* LIBRARY */}
       <section>
-        <h2 className="text-xl font-serif font-bold mb-8">
+        <h2 className="mb-3 text-base font-semibold tracking-tight sm:text-lg md:mb-4">
           Library
+          {filteredBooks.length > 0 && (
+            <span className="ml-2 text-xs font-normal text-gray-400 sm:text-sm">
+              ({filteredBooks.length} books)
+            </span>
+          )}
         </h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 gap-2 xs:grid-cols-3 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {filteredBooks.map((book) => (
             <div
               key={book.id}
               onClick={() => navigate(`/reader/${book.id}`)}
-              className="group cursor-pointer"
+              className="cursor-pointer group"
             >
-              <div className="aspect-[2/3] rounded-2xl overflow-hidden shadow-lg group-hover:-translate-y-3 transition">
+              <div className="aspect-[2/3] rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
                 <img
                   src={book.cover}
-                  className="w-full h-full object-cover group-hover:scale-110 transition"
+                  className="object-cover w-full h-full transition duration-500 group-hover:scale-105"
                   alt=""
                 />
               </div>
 
-              <h3 className="mt-4 text-sm font-bold line-clamp-2">
+              <h3 className="mt-1 text-[11px] font-medium leading-tight line-clamp-2 sm:mt-1.5 sm:text-xs">
                 {book.title}
               </h3>
 
-              <p className="text-xs text-gray-400">
+              <p className="text-[9px] text-gray-400 truncate sm:text-[10px]">
                 {book.category}
               </p>
             </div>
           ))}
         </div>
+
+        {/* Empty state */}
+        {filteredBooks.length === 0 && (
+          <div className="py-12 text-center sm:py-16">
+            <p className="text-xs text-gray-400 sm:text-sm">No books found matching your search.</p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setCategory("");
+              }}
+              className="mt-2 text-xs text-blue-500 hover:text-blue-600 sm:mt-3 sm:text-sm"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );
