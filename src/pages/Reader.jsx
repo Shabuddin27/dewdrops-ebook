@@ -342,23 +342,52 @@ function ReaderContent({ id }) {
     else next();
   };
 
-  // Get responsive font size based on screen width
+  // IMPROVED RESPONSIVE FONT SIZE - Scales smoothly across all screen sizes
   const getResponsiveFontSize = () => {
-    if (typeof window === "undefined") return "13px";
+    if (typeof window === "undefined") return "16px";
     const width = window.innerWidth;
-    if (width < 480) return "11px";
-    if (width < 640) return "12px";
-    if (width < 768) return "13px";
-    if (width < 1024) return "14px";
-    return "15px";
+    
+    // Linear interpolation between breakpoints for smooth scaling
+    if (width < 480) {
+      // 320px -> 12px, 480px -> 14px
+      return `${12 + (width - 320) * (2 / 160)}px`;
+    }
+    if (width < 768) {
+      // 480px -> 14px, 768px -> 16px
+      return `${14 + (width - 480) * (2 / 288)}px`;
+    }
+    if (width < 1024) {
+      // 768px -> 16px, 1024px -> 18px
+      return `${16 + (width - 768) * (2 / 256)}px`;
+    }
+    if (width < 1280) {
+      // 1024px -> 18px, 1280px -> 20px
+      return `${18 + (width - 1024) * (2 / 256)}px`;
+    }
+    if (width < 1536) {
+      // 1280px -> 20px, 1536px -> 22px
+      return `${20 + (width - 1280) * (2 / 256)}px`;
+    }
+    if (width < 1920) {
+      // 1536px -> 22px, 1920px -> 24px
+      return `${22 + (width - 1536) * (2 / 384)}px`;
+    }
+    // 1920px+ -> 24px to 28px for very large screens
+    return `${24 + Math.min(4, (width - 1920) / 480)}px`;
   };
 
+  // IMPROVED RESPONSIVE LINE HEIGHT - Scales with font size
   const getResponsiveLineHeight = () => {
-    if (typeof window === "undefined") return "1.6";
+    if (typeof window === "undefined") return "1.65";
     const width = window.innerWidth;
+    
+    // Line height increases slightly on larger screens for better readability
     if (width < 480) return "1.5";
     if (width < 768) return "1.55";
-    return "1.65";
+    if (width < 1024) return "1.6";
+    if (width < 1280) return "1.65";
+    if (width < 1536) return "1.7";
+    return "1.75";
   };
 
   const [fontSize, setFontSize] = useState(getResponsiveFontSize());
@@ -369,8 +398,21 @@ function ReaderContent({ id }) {
       setFontSize(getResponsiveFontSize());
       setLineHeight(getResponsiveLineHeight());
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    
+    // Use debounce for better performance
+    let timeoutId;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 100);
+    };
+    
+    window.addEventListener("resize", debouncedResize);
+    handleResize(); // Call immediately
+    
+    return () => {
+      window.removeEventListener("resize", debouncedResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return (
