@@ -638,7 +638,7 @@ useEffect(() => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setFontSize(Math.max(12, fontSize - 2))}
+                      onClick={() => setFontSize(Math.max(12, fontSize - 1))}
                       className="p-1.5 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
                     >
                       <Minus size={12} className="dark:text-white" />
@@ -652,7 +652,7 @@ useEffect(() => {
                       className="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700"
                     />
                     <button
-                      onClick={() => setFontSize(Math.min(28, fontSize + 2))}
+                      onClick={() => setFontSize(Math.min(28, fontSize + 1))}
                       className="p-1.5 transition-colors bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
                     >
                       <Plus size={12} className="dark:text-white" />
