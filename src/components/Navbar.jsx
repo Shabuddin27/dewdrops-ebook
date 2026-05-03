@@ -1,132 +1,131 @@
-import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Menu, X, BookOpen, Home, Info, Mail, Moon, Sun } from "lucide-react";
 
-const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const [show, setShow] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export default function Navbar({ isReaderPage }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
+    const savedDarkMode = localStorage.getItem("reader-dark-mode");
+    if (savedDarkMode === "true") {
+      setIsDarkMode(true);
+      document.documentElement.classList.add("dark");
+    } else if (savedDarkMode === "false") {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove("dark");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setIsDarkMode(prefersDark);
+      if (prefersDark) document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    let lastScroll = 0;
-    const handleScroll = () => {
-      const current = window.scrollY;
-      if (current > lastScroll && current > 80) {
-        setShow(false);
-      } else {
-        setShow(true);
-      }
-      lastScroll = current;
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location]);
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem("reader-dark-mode", newDarkMode);
+    newDarkMode 
+      ? document.documentElement.classList.add("dark") 
+      : document.documentElement.classList.remove("dark");
+  };
 
   const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "About", path: "/about" },
-    { name: "Contact", path: "/contact" },
+    { path: "/", label: "Home", icon: Home },
+    { path: "/about", label: "About", icon: Info },
+    { path: "/contact", label: "Contact", icon: Mail },
   ];
 
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <>
-      <nav
-        className={`
-          fixed top-0 left-0 w-full z-[100]
-          transition-all duration-500 ease-in-out
-          ${show ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}
-          ${scrolled 
-            ? "py-3 bg-white/95 backdrop-blur-lg shadow-md border-b border-gray-100" 
-            : "py-4 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100/50"
-          }
-        `}
-      >
-        <div className="relative flex items-center justify-between w-full px-4 mx-auto sm:px-6 md:px-8 lg:px-12">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "glass shadow-lg border-b border-gray-200 dark:border-gray-800"
+          : "bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800"
+      }`}
+    >
+      {/* Changed max-w-7xl to max-w-full to push items to the edges */}
+      <div className="max-w-full px-4 mx-auto sm:px-8 lg:px-12">
+        <div className={`flex items-center justify-between ${isReaderPage ? "h-12 sm:h-14" : "h-16 sm:h-20"}`}>
+          
           {/* Logo */}
-          <Link to="/" className="group shrink-0">
-            <h1 className="font-serif text-xl font-bold tracking-tight text-gray-900 sm:text-2xl md:text-3xl">
-              DewDrop Stories<span className="text-blue-500">.</span>
-            </h1>
+          <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-105">
+            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+              <BookOpen size={18} className="text-white" />
+            </div>
+            <span className="text-lg font-bold tracking-tight text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text">
+              DewDrops
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="items-center hidden gap-8 md:flex">
+          <div className="hidden md:flex md:items-center md:gap-8">
             {navLinks.map((link) => (
               <Link
-                key={link.name}
+                key={link.path}
                 to={link.path}
-                className={`text-sm font-medium relative transition-colors duration-300
-                  ${location.pathname === link.path 
-                    ? "text-blue-600" 
-                    : "text-gray-700 hover:text-gray-900"
-                  }`}
+                className={`relative px-1 py-1 text-sm font-medium transition-colors ${
+                  isActive(link.path)
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                }`}
               >
-                {link.name}
-                {location.pathname === link.path && (
-                  <span className="absolute left-0 w-full h-0.5 bg-blue-500 rounded-full -bottom-1" />
+                {link.label}
+                {isActive(link.path) && (
+                  <motion.div
+                    layoutId="navbar-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
+                  />
                 )}
               </Link>
             ))}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 text-gray-600 transition-colors bg-gray-100 rounded-lg dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 transition-colors rounded-lg md:hidden hover:bg-gray-100 active:bg-gray-200"
-            aria-label="Toggle menu"
-          >
-            <div className="flex flex-col justify-between w-5 h-4">
-              <span className={`w-full h-0.5 bg-gray-800 transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-1.5" : ""}`} />
-              <span className={`w-full h-0.5 bg-gray-800 transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : ""}`} />
-              <span className={`w-full h-0.5 bg-gray-800 transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-1.5" : ""}`} />
-            </div>
-          </button>
+          {/* Mobile UI */}
+          <div className="flex items-center gap-2 md:hidden">
+            <button onClick={toggleDarkMode} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800">
+              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800">
+              {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
         </div>
-      </nav>
 
-      {/* Mobile Menu Dropdown */}
-      <div
-        className={`
-          fixed top-[57px] left-0 right-0 z-[99] bg-white shadow-xl border-b border-gray-100
-          transition-all duration-300 ease-in-out md:hidden
-          ${mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}
-        `}
-      >
-        <div className="flex flex-col py-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={`
-                px-6 py-3.5 text-base font-medium transition-colors
-                ${location.pathname === link.path 
-                  ? "text-blue-600 bg-blue-50/80 border-l-4 border-blue-500" 
-                  : "text-gray-700 hover:bg-gray-50 hover:pl-7 transition-all duration-200"}
-              `}
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
+        {/* Mobile Menu Dropdown */}
+        {isMenuOpen && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="py-4 border-t border-gray-100 md:hidden dark:border-gray-800">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg ${isActive(link.path) ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600" : "text-gray-600 dark:text-gray-300"}`}
+              >
+                <link.icon size={18} />
+                <span className="text-sm font-medium">{link.label}</span>
+              </Link>
+            ))}
+          </motion.div>
+        )}
       </div>
-
-      {/* Subtle shadow at bottom for depth */}
-      <div className="fixed bottom-0 left-0 w-full h-12 pointer-events-none bg-gradient-to-t from-gray-50/50 to-transparent z-[99]" />
-    </>
+    </nav>
   );
-};
-
-export default Navbar;
+}
