@@ -10,19 +10,24 @@ export default function Navbar({ isReaderPage }) {
   const location = useLocation();
 
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem("reader-dark-mode");
-    if (savedDarkMode === "true") {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else if (savedDarkMode === "false") {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setIsDarkMode(prefersDark);
-      if (prefersDark) document.documentElement.classList.add("dark");
-    }
-  }, []);
+  const savedDarkMode = localStorage.getItem("reader-dark-mode");
+  
+  // Check if this is first visit (no saved preference)
+  const isFirstVisit = savedDarkMode === null;
+  
+  if (isFirstVisit) {
+    // Force light mode on first visit
+    setIsDarkMode(false);
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("reader-dark-mode", "false");
+  } else if (savedDarkMode === "true") {
+    setIsDarkMode(true);
+    document.documentElement.classList.add("dark");
+  } else {
+    setIsDarkMode(false);
+    document.documentElement.classList.remove("dark");
+  }
+}, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
