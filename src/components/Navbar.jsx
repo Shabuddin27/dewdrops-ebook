@@ -65,14 +65,20 @@ export default function Navbar({ isReaderPage }) {
         <div className={`flex items-center justify-between ${isReaderPage ? "h-12 sm:h-14" : "h-16 sm:h-20"}`}>
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-105">
-            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
-              <BookOpen size={18} className="text-white" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text">
-              DewDrop Stories<span className="text-blue-500">.</span>
-            </span>
-          </Link>
+            <Link
+              to="/"
+              className="flex items-center gap-2 transition-transform hover:scale-105"
+            >
+              <img
+                src="./covers/logo.png"
+                alt="DewDrop Stories Logo"
+                className="w-16 h-16 object-contain"
+              />
+
+              <span className="text-lg font-bold tracking-tight text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text">
+                DewDrop Stories<span className="text-blue-500">.</span>
+              </span>
+            </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:gap-8">

@@ -274,15 +274,15 @@ function Home() {
 
       {/* CONTINUE READING SECTION */}
       {recent.length > 0 && (
-        <section className="relative mb-6 sm:mb-8">
-          <div className="flex items-center gap-2 mb-3">
+        <section className="relative mb-4 sm:mb-5">
+          <div className="flex items-center gap-2 mb-2">
             <Clock size={18} className="text-blue-500" />
             <h2 className="text-base font-semibold tracking-tight dark:text-white sm:text-lg">
               Continue Reading
             </h2>
           </div>
 
-          <div className="flex gap-2 px-2 pt-2 pb-3 -mx-2 overflow-x-auto scrollbar-hide sm:gap-3">
+          <div className="flex gap-2 py-1 overflow-x-auto scrollbar-hide sm:gap-3">
             {recent.slice(0, 5).map((item, i) => (
               <motion.div
                 key={i}
@@ -291,9 +291,9 @@ function Home() {
                 transition={{ delay: i * 0.05 }}
                 onClick={() => navigate(`/reader/${item.bookId}`)}
                 // ADDED 'group' class here
-                className="group relative min-w-[200px] snap-start transition-all duration-300 hover:-translate-y-1 sm:min-w-[220px] md:min-w-[240px]"
-              >
-                <div className="p-3 pt-4 transition-all bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 hover:shadow-md">
+                className="group relative min-w-[220px] max-w-[220px] snap-start transition-all duration-300 hover:-translate-y-0.5"      
+                        >
+                <div className="p-2.5 transition-all bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 hover:shadow-md">
                   
                   {/* UPDATED: opacity-0 group-hover:opacity-100 and important hover colors */}
                   <button
@@ -304,20 +304,20 @@ function Home() {
                     ✕
                   </button>
                   
-                  <div className="flex gap-3">
+                  <div className="flex gap-2.5">
                     <img
                       src={item.book.cover}
-                      className="object-cover w-12 h-16 rounded-md shadow-sm sm:w-14 sm:h-20"
+                      className="object-cover w-10 h-14 rounded-md shadow-sm shrink-0"
                       alt=""
                     />
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-medium leading-tight line-clamp-2 dark:text-white sm:text-sm">
+                      <h3 className="text-[11px] font-medium leading-snug break-words dark:text-white">
                         {item.book.title}
                       </h3>
-                      <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500 sm:mt-1.5">
+                      <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
                         Ch {item.chapter + 1} • Page {item.currentPage} of {item.totalPages}
                       </p>
-                      <div className="h-1.5 mt-2 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-full sm:mt-2.5">
+                      <div className="h-1.5 mt-1.5 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-full">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${item.progressPercent}%` }}
