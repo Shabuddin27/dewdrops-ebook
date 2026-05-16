@@ -289,7 +289,7 @@ function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => navigate(`/reader/${item.bookId}`)}
+                onClick={() => navigate(`/reader/${item.bookId}`, { state: { resume: true } })}
                 // ADDED 'group' class here
                 className="group relative min-w-[220px] max-w-[220px] snap-start transition-all duration-300 hover:-translate-y-0.5"      
                         >

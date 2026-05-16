@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import books from "../data/books.json";
 import { useState, useEffect, useRef, useMemo, useLayoutEffect, useCallback } from "react";
 import { motion as framerMotion, AnimatePresence } from "framer-motion";
@@ -144,38 +144,39 @@ const paginateByMeasure = (text, measureEl) => {
   return pages.length ? pages : [EMPTY_PAGE];
 };
 
-function ReaderContent({ id }) {
+function ReaderContent({ id, shouldResume }) {
   const navigate = useNavigate();
   const parsedBookId = parseInt(id);
   const book = books.find((b) => b.id === parsedBookId);
+  const savedProgress = useMemo(
+    () => (shouldResume ? getSavedProgress(parsedBookId) : null),
+    [parsedBookId, shouldResume]
+  );
 
-  const [showExtra, setShowExtra] = useState("cover");
+  const [showExtra, setShowExtra] = useState(() => (savedProgress ? null : "cover"));
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [currentChapter, setCurrentChapter] = useState(() => {
-    const progress = getSavedProgress(parsedBookId);
-    const chapter = progress ? progress.chapter : 0;
+    const chapter = savedProgress ? savedProgress.chapter : 0;
     const maxChapter = (book?.chapters.length || 1) - 1;
     return Math.min(Math.max(chapter, 0), maxChapter);
   });
 
   const [currentPosition, setCurrentPosition] = useState(() => {
-    const progress = getSavedProgress(parsedBookId);
-    const progressChapter = progress ? Math.min(Math.max(progress.chapter || 0, 0), (book?.chapters.length || 1) - 1) : 0;
+    const progressChapter = savedProgress ? Math.min(Math.max(savedProgress.chapter || 0, 0), (book?.chapters.length || 1) - 1) : 0;
     const contentLength = book?.chapters?.[progressChapter]?.content?.length || 0;
     
-    if (progress && progress.position !== undefined) {
-      return Math.min(Math.max(progress.position, 0), contentLength);
+    if (savedProgress && savedProgress.position !== undefined) {
+      return Math.min(Math.max(savedProgress.position, 0), contentLength);
     }
     
     return 0;
   });
 
   const [isOpen, setIsOpen] = useState(() => {
-    const progress = getSavedProgress(parsedBookId);
-    return !!progress && progress.pageIndex !== undefined;
+    return !!savedProgress && savedProgress.pageIndex !== undefined;
   });
 
   const [isMobile, setIsMobile] = useState(false);
@@ -285,16 +286,15 @@ function ReaderContent({ id }) {
   // Restore saved page position after pages are loaded
   useEffect(() => {
     if (!initialRestoreDone.current && pages.length > 0 && isOpen) {
-      const progress = getSavedProgress(parsedBookId);
-      if (progress && progress.pageIndex !== undefined && progress.pageIndex < pages.length) {
-        const targetPage = pages[progress.pageIndex];
+      if (shouldResume && savedProgress && savedProgress.pageIndex !== undefined && savedProgress.pageIndex < pages.length) {
+        const targetPage = pages[savedProgress.pageIndex];
         if (targetPage) {
           setCurrentPosition(targetPage.start);
         }
       }
       initialRestoreDone.current = true;
     }
-  }, [pages, isOpen, parsedBookId]);
+  }, [pages, isOpen, shouldResume, savedProgress]);
 
 useEffect(() => {
   if (book && isOpen && pages.length > 0 && initialRestoreDone.current) {
@@ -429,6 +429,13 @@ useEffect(() => {
     initialRestoreDone.current = false;
   };
 
+  const goToChapterIntro = () => {
+    setShowExtra(null);
+    setIsOpen(false);
+    setCurrentPosition(0);
+    initialRestoreDone.current = false;
+  };
+
   const goNextChapter = () => {
     if (currentChapter < book.chapters.length - 1) {
       setCurrentChapter((c) => c + 1);
@@ -525,11 +532,7 @@ useEffect(() => {
     if (isMobile) {
       // Mobile: single page view
       if (currentPageIndex === 0) {
-        if (currentChapter > 0) {
-          goPrevChapter();
-        } else {
-          handleGoToCover();
-        }
+        goToChapterIntro();
       } else {
         setCurrentPosition(pages[currentPageIndex - 1].start);
       }
@@ -541,12 +544,9 @@ useEffect(() => {
       if (prevSpreadStart >= 0) {
         // Go to previous spread
         setCurrentPosition(pages[prevSpreadStart].start);
-      } else if (currentChapter > 0) {
-        // Go to previous chapter's last page/spread
-        goPrevChapter();
       } else {
-        // Go to cover
-        handleGoToCover();
+        // Go back to this chapter's intro before leaving the chapter.
+        goToChapterIntro();
       }
     }
   };
@@ -895,7 +895,7 @@ useEffect(() => {
                 animate={{ opacity: 1, scale: 1 }} 
                 exit={{ opacity: 0, scale: 0.95 }} 
                 transition={{ duration: 0.4 }}
-                onClick={next} 
+                onClick={handleTap} 
                 className="flex items-center justify-center h-full overflow-hidden bg-white rounded-lg shadow-2xl cursor-pointer dark:bg-gray-800"
                 style={{ maxWidth: isMobile ? "85%" : "50%", maxHeight: "100%" }}
               >
@@ -912,10 +912,10 @@ useEffect(() => {
                 transition={{ duration: 0.4 }}
                 onClick={handleTap}
                 className="relative flex items-center justify-center h-full overflow-hidden rounded-lg shadow-2xl cursor-pointer"
-                style={{ maxWidth: isMobile ? "90%" : "55%", maxHeight: "100%" }}
+                style={{ maxWidth: isMobile ? "85%" : "50%", maxHeight: "100%" }}
               >
                 {chapter.introImage ? (
-                  <img src={chapter.introImage} alt="Art" className="object-cover w-full h-full" />
+                  <img src={chapter.introImage} alt="Art" className="object-contain w-auto h-full max-w-full" />
                 ) : (
                   <div className="flex items-center justify-center w-full h-full p-4 sm:p-6 bg-gradient-to-br from-gray-700 to-gray-900">
                     <h1 className="font-serif text-base tracking-wider text-center text-white sm:text-lg md:text-xl lg:text-2xl">
@@ -923,8 +923,10 @@ useEffect(() => {
                     </h1>
                   </div>
                 )}
-                <div className="absolute inset-0 flex flex-col items-center justify-end p-3 pointer-events-none bg-gradient-to-t from-black/50 via-transparent to-transparent sm:p-4">
-                  <p className="text-[8px] text-white/80 sm:text-[10px] md:text-xs">Tap to begin →</p>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none sm:bottom-4">
+                  <p className="rounded-full bg-black/45 px-3 py-1 text-[8px] text-white/90 backdrop-blur-sm sm:text-[10px] md:text-xs">
+                    Tap to begin →
+                  </p>
                 </div>
               </MotionDiv>
             )}
@@ -1005,7 +1007,10 @@ useEffect(() => {
 
 function Reader() {
   const { id } = useParams();
-  return <ReaderContent key={id} id={id} />;
+  const location = useLocation();
+  const shouldResume = location.state?.resume === true;
+
+  return <ReaderContent key={`${id}-${shouldResume ? "resume" : "start"}-${location.key}`} id={id} shouldResume={shouldResume} />;
 }
 
 export default Reader;
