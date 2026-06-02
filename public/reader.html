@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Reader</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'class' };</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  body { -webkit-font-smoothing: antialiased; }
+  .page-body{
+    font-size: var(--rfs, 16px);
+    line-height: var(--rlh, 1.65);
+    white-space: pre-wrap;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  #measure{ position: fixed; left: -99999px; top: 0; visibility: hidden; pointer-events: none; }
+  .hide { display: none !important; }
+  .no-sb::-webkit-scrollbar{ display:none; }
+  .no-sb{ scrollbar-width:none; }
+  #coverView, #introView{ max-width:100%; max-height:100%; }
+  @media (min-width: 768px){
+    #coverView, #introView{ max-width:50%; }
+  }
+  @media (max-width: 767px){
+    #rightPage{ display:none !important; }
+    #leftPage{ border-right-width:0 !important; }
+  }
+</style>
+</head>
+<body class="bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] dark:from-[#1a1a1a] dark:to-[#0d0d0d]">
+
+<div id="reader" class="fixed inset-0 flex overflow-hidden select-none" style="background-color:#f8f9fa;">
+
+  <!-- ============ SETTINGS SHEET ============ -->
+  <div id="settingsOverlay" class="hide fixed inset-0 z-[1100] bg-black/30"></div>
+  <div id="settingsSheet" class="hide fixed bottom-0 left-0 right-0 z-[1100] bg-white dark:bg-gray-800 rounded-t-2xl shadow-2xl max-h-[60vh] overflow-y-auto no-sb">
+    <div class="sticky top-0 z-10 px-4 py-3 bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="settings" class="w-[18px] h-[18px] text-blue-500"></i>
+          <h3 class="text-base font-semibold dark:text-white">Settings</h3>
+        </div>
+        <button id="settingsClose" class="p-1 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+          <i data-lucide="x" class="w-4 h-4 dark:text-white"></i>
+        </button>
+      </div>
+    </div>
+    <div class="p-4 space-y-4">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="type" class="w-[14px] h-[14px] text-blue-500"></i>
+            <label class="text-xs font-medium dark:text-white">Font Size</label>
+          </div>
+          <span id="fsVal" class="px-1.5 py-0.5 text-[10px] font-medium text-blue-600 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-400">16px</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button data-fs="-1" class="fsBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="minus" class="w-3 h-3 dark:text-white"></i></button>
+          <input id="fsRange" type="range" min="12" max="28" value="16" class="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700">
+          <button data-fs="1" class="fsBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="plus" class="w-3 h-3 dark:text-white"></i></button>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="align-left" class="w-[14px] h-[14px] text-blue-500"></i>
+            <label class="text-xs font-medium dark:text-white">Line Height</label>
+          </div>
+          <span id="lhVal" class="px-1.5 py-0.5 text-[10px] font-medium text-blue-600 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-400">1.65</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button data-lh="-0.1" class="lhBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="minus" class="w-3 h-3 dark:text-white"></i></button>
+          <input id="lhRange" type="range" min="1.2" max="2.0" step="0.05" value="1.65" class="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700">
+          <button data-lh="0.1" class="lhBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="plus" class="w-3 h-3 dark:text-white"></i></button>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5 mb-2">
+          <i data-lucide="palette" class="w-[14px] h-[14px] text-blue-500"></i>
+          <label class="text-xs font-medium dark:text-white">Font</label>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button data-ff="serif" class="ffBtn py-1.5 px-2 rounded-lg text-xs font-serif">Serif</button>
+          <button data-ff="sans"  class="ffBtn py-1.5 px-2 rounded-lg text-xs font-sans">Sans</button>
+          <button data-ff="mono"  class="ffBtn py-1.5 px-2 rounded-lg text-xs font-mono">Mono</button>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5 mb-2">
+          <i data-lucide="sun" class="w-[14px] h-[14px] text-blue-500"></i>
+          <i data-lucide="moon" class="w-[14px] h-[14px] text-blue-500"></i>
+          <label class="text-xs font-medium dark:text-white">Theme</label>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="themeLight" class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs"><i data-lucide="sun" class="w-3 h-3"></i><span>Light</span></button>
+          <button id="themeDark"  class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs"><i data-lucide="moon" class="w-3 h-3"></i><span>Dark</span></button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+        <button id="fsToggle" class="flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="maximize-2" class="w-3 h-3"></i><span id="fsToggleLabel">Fullscreen</span></button>
+        <button id="resetBtn" class="flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100"><i data-lucide="rotate-ccw" class="w-3 h-3"></i><span>Reset</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TABLE OF CONTENTS DRAWER ============ -->
+  <div id="tocWrap" class="hide fixed inset-0 z-[1000] flex">
+    <div id="tocOverlay" class="absolute inset-0 bg-black/30"></div>
+    <div class="relative w-[260px] sm:w-[280px] bg-white dark:bg-gray-800 h-full overflow-y-auto shadow-2xl no-sb">
+      <div class="sticky top-0 z-10 bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between p-3 sm:p-4">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <i data-lucide="book-open" class="w-4 h-4 text-gray-600 dark:text-gray-400"></i>
+            <h2 class="text-xs font-semibold text-gray-700 dark:text-gray-300 sm:text-sm">Contents</h2>
+          </div>
+          <button id="tocClose" class="p-1 text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-1.5 sm:p-2" id="tocList"></div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN AREA ============ -->
+  <div class="relative flex flex-col items-center justify-center flex-1 h-full min-h-0 gap-1.5 px-1.5 py-1.5 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 md:px-3 md:py-3">
+
+    <div class="absolute z-50 flex gap-2 top-2 left-2">
+      <button id="backBtn" title="Back" class="p-1.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="arrow-left" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+      <button id="tocBtn" class="p-1.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="menu" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+      <button id="settingsBtn" class="p-1.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="settings" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+    </div>
+
+    <div class="absolute top-0 left-0 right-0 z-40 h-0.5 bg-gray-200 dark:bg-gray-700">
+      <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300" style="width:0%"></div>
+    </div>
+
+    <h2 id="titleEl" class="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wide font-medium text-gray-400 dark:text-gray-500 text-center px-4 pt-12 sm:px-24 sm:pt-5 md:pt-6 shrink-0"></h2>
+
+    <div class="relative flex justify-center flex-1 w-full min-h-0 overflow-hidden">
+
+      <!-- COVER -->
+      <div id="coverView" class="hide items-center justify-center h-full overflow-hidden bg-white rounded-lg shadow-2xl cursor-pointer dark:bg-gray-800">
+        <img id="coverImg" class="object-contain w-auto h-full max-w-full" alt="Cover" />
+        <div id="coverFallback" class="hide flex items-center justify-center w-full h-full p-6 bg-gradient-to-br from-blue-500 to-indigo-700">
+          <h1 id="coverFallbackTitle" class="font-serif text-lg tracking-wide text-center text-white md:text-2xl"></h1>
+        </div>
+      </div>
+
+      <!-- CHAPTER INTRO -->
+      <div id="introView" class="hide relative items-center justify-center h-full overflow-hidden rounded-lg shadow-2xl cursor-pointer">
+        <img id="introImg" class="object-contain w-auto h-full max-w-full" alt="Chapter" />
+        <div id="introFallback" class="hide flex items-center justify-center w-full h-full p-6 bg-gradient-to-br from-gray-700 to-gray-900">
+          <h1 id="introFallbackTitle" class="font-serif text-base tracking-wider text-center text-white sm:text-lg md:text-xl lg:text-2xl"></h1>
+        </div>
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none sm:bottom-4">
+          <p class="rounded-full bg-black/45 px-3 py-1 text-[8px] text-white/90 backdrop-blur-sm sm:text-[10px] md:text-xs">Tap to begin →</p>
+        </div>
+      </div>
+
+      <!-- READING -->
+      <div id="readingView" class="hide w-full h-full min-h-0 p-1 rounded-lg bg-white/80 dark:bg-gray-800/80 shadow-2xl sm:p-1.5 md:p-2">
+        <div id="spread" class="flex w-full h-full min-h-0 overflow-hidden text-gray-800 bg-white rounded-lg shadow-xl cursor-pointer dark:text-gray-200 dark:bg-gray-800">
+          <div id="leftPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden bg-white border-r border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+            <div id="leftBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-2 pt-2 pb-1 text-justify text-gray-700 dark:text-gray-300 sm:px-3 sm:pt-3 sm:pb-2 md:px-4 md:pt-4 md:pb-3 lg:px-5"></div>
+            <div id="leftFolio" class="text-center font-mono text-gray-400 dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
+          </div>
+          <div id="rightPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden bg-white dark:bg-gray-800">
+            <div id="rightBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-2 pt-2 pb-1 text-justify text-gray-700 dark:text-gray-300 sm:px-3 sm:pt-3 sm:pb-2 md:px-4 md:pt-4 md:pb-3 lg:px-5"></div>
+            <div id="rightFolio" class="text-center font-mono text-gray-400 dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="flex gap-3 text-[8px] text-gray-400 dark:text-gray-500 shrink-0 pb-0.5 sm:gap-4 sm:text-[9px] md:text-[10px]">
+      <span>← Tap left</span><span>Tap right →</span>
+    </div>
+  </div>
+</div>
+
+<div id="measure"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const reader = $('reader');
+const measure = $('measure');
+const leftBody = $('leftBody'), rightBody = $('rightBody');
+const leftFolio = $('leftFolio'), rightFolio = $('rightFolio');
+const spread = $('spread'), rightPage = $('rightPage');
+const titleEl = $('titleEl'), progressBar = $('progressBar');
+const coverView = $('coverView'), introView = $('introView'), readingView = $('readingView');
+
+let BOOK = null;
+let view = 'cover';
+let chapterIndex = 0;
+let pages = [], page = 0;
+let fontSize = 16, lineHeight = 1.65, fontFamily = 'serif';
+let repaginating = false;
+const isMobile = () => window.innerWidth < 768;
+const isDark = () => document.documentElement.classList.contains('dark');
+
+function applySpreadLayout(){
+  const mobile = isMobile();
+  rightPage.style.display = mobile ? 'none' : 'flex';
+  rightPage.style.visibility = 'visible';
+}
+
+/* ---------- pagination engine (approved) ---------- */
+function skipWS(t,i){ while(i<t.length && /\s/.test(t[i])) i++; return i; }
+function wordBoundary(t,start,target){
+  if(target>=t.length) return t.length;
+  let b=Math.min(target,t.length);
+  while(b>start && !/\s/.test(t[b]) && !/\s/.test(t[b-1])) b--;
+  return b>start?b:Math.min(target,t.length);
+}
+function fits(t){ measure.textContent = t || ' '; return measure.scrollHeight <= measure.clientHeight + 1; }
+function paginate(text){
+  applySpreadLayout();
+  const cs = getComputedStyle(leftBody);
+  const w = leftBody.clientWidth  - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const h = leftBody.clientHeight - parseFloat(cs.paddingTop)  - parseFloat(cs.paddingBottom);
+  if(w<=4 || h<=4) return null;
+  ['fontFamily','fontSize','fontWeight','fontStyle','lineHeight','letterSpacing','wordSpacing','whiteSpace','wordBreak','textAlign','textTransform','hyphens']
+    .forEach(p => { measure.style[p] = cs[p]; });
+  measure.style.boxSizing='border-box'; measure.style.padding='0';
+  measure.style.width=w+'px'; measure.style.height=h+'px'; measure.style.overflow='hidden';
+  const out=[]; let start=0;
+  while(start<text.length){
+    start=skipWS(text,start); if(start>=text.length) break;
+    let lo=start+1, hi=text.length, best=start;
+    while(lo<=hi){ const mid=(lo+hi)>>1; let end=wordBoundary(text,start,mid);
+      if(end<=start) end=Math.min(mid,text.length);
+      if(fits(text.slice(start,end))){ best=end; lo=mid+1; } else hi=mid-1; }
+    const end=best>start?best:Math.min(start+1,text.length);
+    out.push({text:text.slice(start,end),start,end}); start=end;
+  }
+  return out.length?out:[{text:'',start:0,end:0}];
+}
+function repaginate(retry=0){
+  if(repaginating || !BOOK || view!=='reading') return;
+  repaginating=true;
+  requestAnimationFrame(()=>{
+    const prevStart = pages[page]?pages[page].start:0;
+    const res = paginate(BOOK.chapters[chapterIndex].content || '');
+    if(!res){ repaginating=false; if(retry<15) setTimeout(()=>repaginate(retry+1),40); return; }
+    pages=res;
+    let idx=pages.findIndex(p=>prevStart>=p.start && prevStart<p.end);
+    page = idx<0?0:Math.min(idx,pages.length-1);
+    renderReading(); saveProgress(); repaginating=false;
+  });
+}
+
+/* ---------- views ---------- */
+function showView(v){
+  view=v;
+  coverView.classList.toggle('hide', v!=='cover'); coverView.classList.toggle('flex', v==='cover');
+  introView.classList.toggle('hide', v!=='intro'); introView.classList.toggle('flex', v==='intro');
+  readingView.classList.toggle('hide', v!=='reading');
+  updateTitle();
+}
+function updateTitle(){
+  if(!BOOK){ titleEl.textContent=''; return; }
+  titleEl.textContent = view==='cover' ? (BOOK.title||'') : (BOOK.chapters[chapterIndex].title||'');
+}
+function setImgWithFallback(imgEl, fbEl, src){
+  if(src){
+    imgEl.classList.remove('hide'); fbEl.classList.add('hide');
+    imgEl.onerror = () => { imgEl.classList.add('hide'); fbEl.classList.remove('hide'); };
+    imgEl.src = src;
+  } else { imgEl.classList.add('hide'); fbEl.classList.remove('hide'); }
+}
+function showCover(){
+  $('coverFallbackTitle').textContent = BOOK.title || '';
+  setImgWithFallback($('coverImg'), $('coverFallback'), BOOK.cover);
+  showView('cover'); progressBar.style.width='0%'; markToc();
+}
+function showIntro(ci){
+  chapterIndex = Math.max(0, Math.min(ci, BOOK.chapters.length-1));
+  const ch = BOOK.chapters[chapterIndex];
+  $('introFallbackTitle').textContent = ch.title || '';
+  setImgWithFallback($('introImg'), $('introFallback'), ch.introImage);
+  page=0; showView('intro'); markToc();
+}
+function openReadingAt(targetPage){
+  showView('reading');
+  repaginating=true;
+  requestAnimationFrame(()=>{
+    const res = paginate(BOOK.chapters[chapterIndex].content || '');
+    repaginating=false;
+    if(!res){ setTimeout(()=>openReadingAt(targetPage),40); return; }
+    pages=res;
+    page = targetPage==='end' ? pages.length-1 : Math.min(Math.max(targetPage,0), pages.length-1);
+    renderReading(); saveProgress(); markToc();
+  });
+}
+
+/* ---------- reading render ---------- */
+function spreadStart(){ return isMobile()?page:Math.floor(page/2)*2; }
+function renderReading(){
+  applySpreadLayout();
+  const L=spreadStart();
+  const R=isMobile()?-1:(L+1<pages.length?L+1:-1);
+  leftBody.textContent = pages[L]?pages[L].text:'';
+  leftFolio.textContent = (L+1)+' / '+pages.length;
+  if(R!==-1){
+    rightBody.textContent=pages[R].text; rightFolio.textContent=(R+1)+' / '+pages.length;
+    rightPage.style.visibility='visible';
+  }else{
+    rightBody.textContent=''; rightFolio.textContent='';
+  }
+  const lastShown=(R!==-1?R:L)+1;
+  progressBar.style.width=Math.min(100,(lastShown/pages.length)*100)+'%';
+  updateTitle();
+}
+
+/* ---------- navigation ---------- */
+function next(){
+  if(view==='cover'){ showIntro(0); return; }
+  if(view==='intro'){ openReadingAt(0); return; }
+  if(isMobile()){
+    if(page<pages.length-1){ page++; renderReading(); saveProgress(); }
+    else if(chapterIndex<BOOK.chapters.length-1){ showIntro(chapterIndex+1); }
+  }else{
+    const L=spreadStart();
+    if(L+2<pages.length){ page=L+2; renderReading(); saveProgress(); }
+    else if(chapterIndex<BOOK.chapters.length-1){ showIntro(chapterIndex+1); }
+  }
+}
+function prev(){
+  if(view==='cover'){ return; }
+  if(view==='intro'){
+    if(chapterIndex>0){ chapterIndex--; openReadingAt('end'); } else { showCover(); }
+    return;
+  }
+  if(isMobile()){
+    if(page>0){ page--; renderReading(); saveProgress(); } else { showIntro(chapterIndex); }
+  }else{
+    const L=spreadStart();
+    if(L-2>=0){ page=L-2; renderReading(); saveProgress(); } else { showIntro(chapterIndex); }
+  }
+}
+
+/* ---------- TOC ---------- */
+function buildToc(){
+  const list=$('tocList');
+  let html = '<div data-toc="cover" class="toc-item flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 mb-1 rounded-lg cursor-pointer">'
+    + '<i data-lucide="home" class="w-[14px] h-[14px]"></i>'
+    + '<span class="text-xs font-medium sm:text-sm">Cover</span></div>'
+    + '<div class="my-1.5 border-t border-gray-100 dark:border-gray-700 sm:my-2"></div>';
+  html += BOOK.chapters.map((ch,i)=>
+    '<div data-toc="'+i+'" class="toc-item flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 mb-1 rounded-lg cursor-pointer">'
+    + '<span class="w-4 text-[10px] font-medium text-gray-400 dark:text-gray-500 sm:w-5 sm:text-xs">'+(i+1)+'</span>'
+    + '<span class="flex-1 text-[11px] truncate sm:text-sm">'+(ch.title || ('Chapter '+(i+1)))+'</span></div>'
+  ).join('');
+  list.innerHTML=html;
+  list.querySelectorAll('.toc-item').forEach(el=>{
+    el.addEventListener('click',()=>{ const t=el.dataset.toc; closeToc(); if(t==='cover') showCover(); else showIntro(Number(t)); });
+  });
+  if(window.lucide) lucide.createIcons();
+  markToc();
+}
+function markToc(){
+  document.querySelectorAll('#tocList .toc-item').forEach(el=>{
+    const t=el.dataset.toc;
+    const active = (t==='cover' && view==='cover') || (t!=='cover' && view!=='cover' && Number(t)===chapterIndex);
+    el.classList.toggle('bg-gray-100', active); el.classList.toggle('dark:bg-gray-700', active);
+    el.classList.toggle('text-gray-900', active); el.classList.toggle('dark:text-white', active);
+    el.classList.toggle('text-gray-600', !active); el.classList.toggle('dark:text-gray-400', !active);
+    el.classList.toggle('hover:bg-gray-50', !active); el.classList.toggle('dark:hover:bg-gray-700', !active);
+  });
+}
+function openToc(){ $('tocWrap').classList.remove('hide'); }
+function closeToc(){ $('tocWrap').classList.add('hide'); }
+
+/* ---------- settings ---------- */
+function applyTypography(){
+  reader.style.setProperty('--rfs', fontSize+'px');
+  reader.style.setProperty('--rlh', lineHeight);
+  [leftBody,rightBody].forEach(el=>{ el.classList.remove('font-serif','font-sans','font-mono'); el.classList.add('font-'+fontFamily); });
+  $('fsVal').textContent=fontSize+'px'; $('fsRange').value=fontSize;
+  $('lhVal').textContent=String(Math.round(lineHeight*100)/100); $('lhRange').value=lineHeight;
+  document.querySelectorAll('.ffBtn').forEach(b=>{
+    const on=b.dataset.ff===fontFamily;
+    b.classList.toggle('bg-blue-500',on); b.classList.toggle('text-white',on); b.classList.toggle('shadow-md',on);
+    b.classList.toggle('bg-gray-100',!on); b.classList.toggle('dark:bg-gray-700',!on);
+    b.classList.toggle('text-gray-700',!on); b.classList.toggle('dark:text-gray-300',!on);
+  });
+  markThemeButtons();
+}
+function markThemeButtons(){
+  const d=isDark();
+  const set=(btn,on)=>{ btn.classList.toggle('bg-blue-500',on); btn.classList.toggle('text-white',on); btn.classList.toggle('shadow-md',on);
+    btn.classList.toggle('bg-gray-100',!on); btn.classList.toggle('dark:bg-gray-700',!on); btn.classList.toggle('text-gray-700',!on); btn.classList.toggle('dark:text-gray-300',!on); };
+  set($('themeLight'),!d); set($('themeDark'),d);
+}
+function setTheme(dark){
+  document.documentElement.classList.toggle('dark',dark);
+  reader.style.backgroundColor = dark ? '#1a1a1a' : '#f8f9fa';
+  try{ localStorage.setItem('reader-dark-mode', String(dark)); }catch(e){}
+  markThemeButtons();
+}
+function saveSettings(){
+  if(!BOOK) return;
+  try{
+    localStorage.setItem('font-size-'+BOOK.id, fontSize);
+    localStorage.setItem('line-height-'+BOOK.id, lineHeight);
+    localStorage.setItem('font-family-'+BOOK.id, fontFamily);
+  }catch(e){}
+}
+function loadSettings(){
+  try{
+    const fs=parseInt(localStorage.getItem('font-size-'+BOOK.id)); if(fs) fontSize=Math.max(12,Math.min(28,fs));
+    const lh=parseFloat(localStorage.getItem('line-height-'+BOOK.id)); if(lh) lineHeight=Math.max(1.2,Math.min(2,lh));
+    const ff=localStorage.getItem('font-family-'+BOOK.id); if(ff) fontFamily=ff;
+  }catch(e){}
+}
+
+/* ---------- progress ---------- */
+function saveProgress(){
+  if(!BOOK || view!=='reading' || !pages.length) return;
+  try{
+    const L=spreadStart(); const R=isMobile()?-1:(L+1<pages.length?L+1:-1);
+    const entry={ bookId:BOOK.id, chapter:chapterIndex, position:pages[page]?pages[page].start:0,
+      pageIndex:(R!==-1?R:L), totalPages:pages.length, updatedAt:Date.now() };
+    let ex=JSON.parse(localStorage.getItem('reading-progress'))||[]; if(!Array.isArray(ex)) ex=[];
+    ex=ex.filter(p=>p.bookId!==BOOK.id); ex.unshift(entry);
+    localStorage.setItem('reading-progress', JSON.stringify(ex.slice(0,10)));
+  }catch(e){}
+}
+function loadSaved(){
+  try{ const a=JSON.parse(localStorage.getItem('reading-progress'))||[]; return Array.isArray(a)?a.find(p=>String(p.bookId)===String(BOOK.id)):null; }catch(e){ return null; }
+}
+
+/* ---------- wiring ---------- */
+function tapHandler(el){
+  el.addEventListener('click',(e)=>{ const r=el.getBoundingClientRect(); ((e.clientX-r.left)<r.width/2)?prev():next(); });
+  let tx=0;
+  el.addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
+  el.addEventListener('touchend',e=>{ const d=tx-e.changedTouches[0].clientX; if(d>50) next(); else if(d<-50) prev(); });
+}
+[coverView,introView,spread].forEach(tapHandler);
+document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight') next(); if(e.key==='ArrowLeft') prev(); });
+
+$('backBtn').addEventListener('click',()=>{ if(document.referrer && new URL(document.referrer).origin===location.origin) history.back(); else location.href='/'; });
+$('tocBtn').addEventListener('click',openToc);
+$('tocClose').addEventListener('click',closeToc);
+$('tocOverlay').addEventListener('click',closeToc);
+$('settingsBtn').addEventListener('click',()=>{ $('settingsOverlay').classList.remove('hide'); $('settingsSheet').classList.remove('hide'); if(window.lucide) lucide.createIcons(); });
+function closeSettings(){ $('settingsOverlay').classList.add('hide'); $('settingsSheet').classList.add('hide'); }
+$('settingsClose').addEventListener('click',closeSettings);
+$('settingsOverlay').addEventListener('click',closeSettings);
+
+function changeFont(){ applyTypography(); saveSettings(); repaginate(); }
+$('fsRange').addEventListener('input',e=>{ fontSize=parseInt(e.target.value); changeFont(); });
+document.querySelectorAll('.fsBtn').forEach(b=>b.addEventListener('click',()=>{ fontSize=Math.max(12,Math.min(28,fontSize+parseInt(b.dataset.fs))); changeFont(); }));
+$('lhRange').addEventListener('input',e=>{ lineHeight=parseFloat(e.target.value); changeFont(); });
+document.querySelectorAll('.lhBtn').forEach(b=>b.addEventListener('click',()=>{ lineHeight=Math.max(1.2,Math.min(2,+(lineHeight+parseFloat(b.dataset.lh)).toFixed(2))); changeFont(); }));
+document.querySelectorAll('.ffBtn').forEach(b=>b.addEventListener('click',()=>{ fontFamily=b.dataset.ff; changeFont(); }));
+$('themeLight').addEventListener('click',()=>setTheme(false));
+$('themeDark').addEventListener('click',()=>setTheme(true));
+$('resetBtn').addEventListener('click',()=>{ fontSize=16; lineHeight=1.65; fontFamily='serif'; setTheme(false); changeFont(); });
+$('fsToggle').addEventListener('click',()=>{ if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); } else { document.exitFullscreen?.(); } });
+document.addEventListener('fullscreenchange',()=>{ $('fsToggleLabel').textContent = document.fullscreenElement ? 'Exit Full' : 'Fullscreen'; if(window.lucide) lucide.createIcons(); });
+
+const ro=new ResizeObserver(()=>{ if(view==='reading') repaginate(); });
+ro.observe(leftBody);
+window.addEventListener('orientationchange',()=>{ if(view==='reading') repaginate(); });
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>{ if(view==='reading') repaginate(); }); }
+
+/* ---------- boot ---------- */
+try{ if(localStorage.getItem('reader-dark-mode')==='true') document.documentElement.classList.add('dark'); }catch(e){}
+reader.style.backgroundColor = isDark() ? '#1a1a1a' : '#f8f9fa';
+
+async function fetchBooks(){
+  const cands=['books.json','/books.json','/data/books.json','./data/books.json','/src/data/books.json'];
+  for(const u of cands){ try{ const r=await fetch(u); if(r.ok) return await r.json(); }catch(e){} }
+  return null;
+}
+function fatal(html){ reader.innerHTML='<div class="flex flex-col items-center justify-center gap-3 w-full h-full text-center p-8 dark:text-white">'+html+'</div>'; }
+
+(async function init(){
+  const id=new URLSearchParams(location.search).get('id');
+  const books=await fetchBooks();
+  if(!books){ fatal('<p>Couldn\u2019t load <b>books.json</b>. Place a copy at <code>public/books.json</code>.</p><p><a class="text-blue-500" href="/">\u2190 Back to library</a></p>'); return; }
+  BOOK = books.find(b=>String(b.id)===String(id)) || books[0];
+  if(!BOOK || !Array.isArray(BOOK.chapters) || !BOOK.chapters.length){ fatal('<p>Book not found.</p><p><a class="text-blue-500" href="/">\u2190 Back to library</a></p>'); return; }
+
+  document.title = BOOK.title || 'Reader';
+  loadSettings();
+  applyTypography();
+  buildToc();
+  if(window.lucide) lucide.createIcons();
+
+  const saved=loadSaved();
+  if(saved){
+    chapterIndex=Math.min(Math.max(saved.chapter||0,0),BOOK.chapters.length-1);
+    showView('reading');
+    requestAnimationFrame(()=>{
+      const res=paginate(BOOK.chapters[chapterIndex].content||'');
+      if(res){ pages=res;
+        let idx=pages.findIndex(p=>(saved.position||0)>=p.start && (saved.position||0)<p.end);
+        page=idx<0?0:idx; renderReading(); }
+      repaginate();
+    });
+  } else {
+    showCover();
+  }
+})();
+</script>
+</body>
+</html>

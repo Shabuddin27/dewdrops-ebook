@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import books from "../data/books.json";
 import { Search, X, Filter, ChevronDown, Clock, BookOpen, Heart, Grid, List } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion as framerMotion } from "framer-motion";
+
+const MotionDiv = framerMotion.div;
 
 const getRecentReading = () => {
   let saved = [];
@@ -12,66 +13,76 @@ const getRecentReading = () => {
     saved = [];
   }
   if (!Array.isArray(saved)) return [];
-  
+
   return saved
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .map((p) => {
       const book = books.find((b) => b.id === p.bookId);
       if (!book) return null;
-      
+
       const chapter = book.chapters?.[p.chapter];
       if (!chapter) return { ...p, book, totalPages: 0, currentPage: 0, progressPercent: 0 };
-      
+
+      // Prefer the real page count saved by the reader; fall back to an estimate.
       const contentLength = chapter.content?.length || 0;
       const estimatedCharsPerPage = 800;
-      const totalPages = Math.max(1, Math.ceil(contentLength / estimatedCharsPerPage));
-      
+      const totalPages = p.totalPages && p.totalPages > 0
+        ? p.totalPages
+        : Math.max(1, Math.ceil(contentLength / estimatedCharsPerPage));
+
       let currentPage = 1;
       let progressPercent = 0;
-      
+
       if (p.pageIndex !== undefined) {
         currentPage = Math.min(p.pageIndex + 1, totalPages);
-        if (currentPage >= totalPages || (currentPage === totalPages - 1 && totalPages % 2 === 0)) {
+        if (currentPage >= totalPages) {
           currentPage = totalPages;
           progressPercent = 100;
         } else {
           progressPercent = (currentPage / totalPages) * 100;
         }
       }
-      
+
       return { ...p, book, currentPage, totalPages, progressPercent };
     })
     .filter((p) => p && p.book);
 };
 
+// Open the standalone HTML reader page (full navigation, not the SPA router).
+const openReader = (bookId) => {
+  window.location.href = `/reader.html?id=${bookId}`;
+};
+
+const getWishlist = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem("wishlist")) || [];
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+};
+
 function Home() {
-  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [category, setCategory] = useState("");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [sort, setSort] = useState("recent");
   const [sortOpen, setSortOpen] = useState(false);
-  const [recent, setRecent] = useState([]);
+  const [recent, setRecent] = useState(getRecentReading);
   const [viewMode, setViewMode] = useState("grid");
-  const [wishlist, setWishlist] = useState([]);
+  const [wishlist, setWishlist] = useState(getWishlist);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  
+
   const searchRef = useRef(null);
   const inputRef = useRef(null);
   const categoryRef = useRef(null);
   const sortRef = useRef(null);
 
   useEffect(() => {
-    setRecent(getRecentReading());
     const handleStorageChange = () => setRecent(getRecentReading());
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
-  useEffect(() => {
-    const savedWishlist = localStorage.getItem("wishlist");
-    if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
   }, []);
 
   useEffect(() => {
@@ -160,7 +171,7 @@ function Home() {
           </div>
 
           {searchOpen && suggestions.length > 0 && (
-            <motion.div 
+            <MotionDiv
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="absolute left-0 right-0 z-50 mt-2 overflow-hidden bg-white border border-gray-100 shadow-lg dark:bg-gray-800 dark:border-gray-700 rounded-xl top-full"
@@ -168,7 +179,7 @@ function Home() {
               {suggestions.map((book) => (
                 <div
                   key={book.id}
-                  onClick={() => navigate(`/reader/${book.id}`)}
+                  onClick={() => openReader(book.id)}
                   className="flex items-center gap-3 p-2 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 sm:p-3"
                 >
                   <img src={book.cover} className="object-cover h-10 rounded-md w-7 sm:w-8 sm:h-11" alt="" />
@@ -178,7 +189,7 @@ function Home() {
                   </div>
                 </div>
               ))}
-            </motion.div>
+            </MotionDiv>
           )}
         </div>
 
@@ -194,7 +205,7 @@ function Home() {
             </button>
 
             {categoryOpen && (
-              <motion.div 
+              <MotionDiv
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="absolute right-0 z-50 mt-1 overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg rounded-xl min-w-[130px] sm:min-w-[140px]"
@@ -209,7 +220,7 @@ function Home() {
                     {c}
                   </button>
                 ))}
-              </motion.div>
+              </MotionDiv>
             )}
           </div>
 
@@ -224,7 +235,7 @@ function Home() {
             </button>
 
             {sortOpen && (
-              <motion.div 
+              <MotionDiv
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="absolute right-0 z-50 mt-1 overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg rounded-xl min-w-[130px]"
@@ -239,15 +250,15 @@ function Home() {
                     {opt.label}
                   </button>
                 ))}
-              </motion.div>
+              </MotionDiv>
             )}
           </div>
 
           <button
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
             className={`flex items-center gap-1 px-2.5 py-2 text-xs font-medium transition-colors rounded-xl sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm ${
-              showFavoritesOnly 
-                ? "bg-red-500 text-white" 
+              showFavoritesOnly
+                ? "bg-red-500 text-white"
                 : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
           >
@@ -284,18 +295,16 @@ function Home() {
 
           <div className="flex gap-2 py-1 overflow-x-auto scrollbar-hide sm:gap-3">
             {recent.slice(0, 5).map((item, i) => (
-              <motion.div
+              <MotionDiv
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => navigate(`/reader/${item.bookId}`, { state: { resume: true } })}
-                // ADDED 'group' class here
-                className="group relative min-w-[220px] max-w-[220px] snap-start transition-all duration-300 hover:-translate-y-0.5"      
-                        >
+                onClick={() => openReader(item.bookId)}
+                className="group relative min-w-[220px] max-w-[220px] snap-start transition-all duration-300 hover:-translate-y-0.5"
+              >
                 <div className="p-2.5 transition-all bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 hover:shadow-md">
-                  
-                  {/* UPDATED: opacity-0 group-hover:opacity-100 and important hover colors */}
+
                   <button
                     onClick={(e) => removeFromRecent(item.bookId, e)}
                     className="absolute z-20 flex items-center justify-center w-5 h-5 text-[10px] font-bold text-gray-500 bg-white border border-gray-200 rounded-full shadow-md -top-2 -right-2 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 opacity-0 group-hover:opacity-100 hover:!bg-red-500 hover:!text-white hover:!border-red-500 transition-all duration-200"
@@ -303,7 +312,7 @@ function Home() {
                   >
                     ✕
                   </button>
-                  
+
                   <div className="flex gap-2.5">
                     <img
                       src={item.book.cover}
@@ -318,7 +327,7 @@ function Home() {
                         Ch {item.chapter + 1} • Page {item.currentPage} of {item.totalPages}
                       </p>
                       <div className="h-1.5 mt-1.5 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-full">
-                        <motion.div
+                        <MotionDiv
                           initial={{ width: 0 }}
                           animate={{ width: `${item.progressPercent}%` }}
                           transition={{ duration: 0.5 }}
@@ -331,12 +340,12 @@ function Home() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </MotionDiv>
             ))}
           </div>
         </section>
       )}
-      
+
       {/* LIBRARY SECTION */}
       <section>
         <div className="flex items-center gap-2 mb-3">
@@ -354,12 +363,12 @@ function Home() {
         {viewMode === "grid" ? (
           <div className="grid grid-cols-2 gap-2 xs:grid-cols-3 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {filteredBooks.map((book, index) => (
-              <motion.div
+              <MotionDiv
                 key={book.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.02 }}
-                onClick={() => navigate(`/reader/${book.id}`)} 
+                onClick={() => openReader(book.id)}
                 className="cursor-pointer group"
               >
                 <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
@@ -377,17 +386,17 @@ function Home() {
                 <p className="text-[9px] text-gray-400 dark:text-gray-500 truncate sm:text-[10px]">
                   {book.category}
                 </p>
-              </motion.div>
+              </MotionDiv>
             ))}
           </div>
         ) : (
           <div className="space-y-2">
             {filteredBooks.map((book) => (
-              <motion.div
+              <MotionDiv
                 key={book.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                onClick={() => navigate(`/reader/${book.id}`)}
+                onClick={() => openReader(book.id)}
                 className="flex gap-3 p-3 transition-all bg-white rounded-lg shadow-sm cursor-pointer dark:bg-gray-800 hover:shadow-md"
               >
                 <div className="flex-shrink-0 w-12 h-16 overflow-hidden rounded-md">
@@ -406,7 +415,7 @@ function Home() {
                 >
                   <Heart size={16} className={isWishlisted(book.id) ? "fill-red-500 text-red-500" : "text-gray-400"} />
                 </button>
-              </motion.div>
+              </MotionDiv>
             ))}
           </div>
         )}
@@ -414,8 +423,8 @@ function Home() {
         {filteredBooks.length === 0 && (
           <div className="py-12 text-center sm:py-16">
             <p className="text-xs text-gray-400 dark:text-gray-500 sm:text-sm">
-              {showFavoritesOnly 
-                ? "No favorite books found. Add some books to your favorites!" 
+              {showFavoritesOnly
+                ? "No favorite books found. Add some books to your favorites!"
                 : "No books found matching your search."}
             </p>
             <button

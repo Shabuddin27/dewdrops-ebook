@@ -1,33 +1,26 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Menu, X, BookOpen, Home, Info, Mail, Moon, Sun } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { motion as framerMotion } from "framer-motion";
+import { Menu, X, Home, Info, Mail, Moon, Sun } from "lucide-react";
+
+const MotionDiv = framerMotion.div;
 
 export default function Navbar({ isReaderPage }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("reader-dark-mode") === "true");
   const location = useLocation();
 
   useEffect(() => {
-  const savedDarkMode = localStorage.getItem("reader-dark-mode");
-  
-  // Check if this is first visit (no saved preference)
-  const isFirstVisit = savedDarkMode === null;
-  
-  if (isFirstVisit) {
-    // Force light mode on first visit
-    setIsDarkMode(false);
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("reader-dark-mode", "false");
-  } else if (savedDarkMode === "true") {
-    setIsDarkMode(true);
-    document.documentElement.classList.add("dark");
-  } else {
-    setIsDarkMode(false);
-    document.documentElement.classList.remove("dark");
-  }
-}, []);
+    const savedDarkMode = localStorage.getItem("reader-dark-mode");
+    const dark = savedDarkMode === "true";
+
+    if (savedDarkMode === null) {
+      localStorage.setItem("reader-dark-mode", "false");
+    }
+
+    document.documentElement.classList.toggle("dark", dark);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -60,11 +53,8 @@ export default function Navbar({ isReaderPage }) {
           : "bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800"
       }`}
     >
-      {/* Changed max-w-7xl to max-w-full to push items to the edges */}
       <div className="max-w-full px-4 mx-auto sm:px-8 lg:px-12">
         <div className={`flex items-center justify-between ${isReaderPage ? "h-12 sm:h-14" : "h-16 sm:h-20"}`}>
-          
-          {/* Logo */}
             <Link
               to="/"
               className="flex items-center gap-2 transition-transform hover:scale-105"
@@ -80,7 +70,6 @@ export default function Navbar({ isReaderPage }) {
               </span>
             </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:gap-8">
             {navLinks.map((link) => (
               <Link
@@ -94,7 +83,7 @@ export default function Navbar({ isReaderPage }) {
               >
                 {link.label}
                 {isActive(link.path) && (
-                  <motion.div
+                  <MotionDiv
                     layoutId="navbar-indicator"
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
                   />
@@ -109,7 +98,6 @@ export default function Navbar({ isReaderPage }) {
             </button>
           </div>
 
-          {/* Mobile UI */}
           <div className="flex items-center gap-2 md:hidden">
             <button onClick={toggleDarkMode} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800">
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
@@ -120,9 +108,8 @@ export default function Navbar({ isReaderPage }) {
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="py-4 border-t border-gray-100 md:hidden dark:border-gray-800">
+          <MotionDiv initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="py-4 border-t border-gray-100 md:hidden dark:border-gray-800">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -134,7 +121,7 @@ export default function Navbar({ isReaderPage }) {
                 <span className="text-sm font-medium">{link.label}</span>
               </Link>
             ))}
-          </motion.div>
+          </MotionDiv>
         )}
       </div>
     </nav>
