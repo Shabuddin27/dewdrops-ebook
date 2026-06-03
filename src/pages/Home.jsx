@@ -49,8 +49,10 @@ const getRecentReading = () => {
 };
 
 // Open the standalone HTML reader page (full navigation, not the SPA router).
-const openReader = (bookId) => {
-  window.location.href = `/reader.html?id=${bookId}`;
+const openReader = (bookId, resume = false) => {
+  const params = new URLSearchParams({ id: bookId });
+  if (resume) params.set("resume", "true");
+  window.location.href = `/reader.html?${params.toString()}`;
 };
 
 const getWishlist = () => {
@@ -300,14 +302,14 @@ function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => openReader(item.bookId)}
+                onClick={() => openReader(item.bookId, true)}
                 className="group relative min-w-[220px] max-w-[220px] snap-start transition-all duration-300 hover:-translate-y-0.5"
               >
                 <div className="p-2.5 transition-all bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 hover:shadow-md">
 
                   <button
                     onClick={(e) => removeFromRecent(item.bookId, e)}
-                    className="absolute z-20 flex items-center justify-center w-5 h-5 text-[10px] font-bold text-gray-500 bg-white border border-gray-200 rounded-full shadow-md -top-2 -right-2 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 opacity-0 group-hover:opacity-100 hover:!bg-red-500 hover:!text-white hover:!border-red-500 transition-all duration-200"
+                    className="absolute z-20 flex items-center justify-center w-5 h-5 text-[10px] font-bold text-gray-500 bg-white border border-gray-200 rounded-full shadow-md -top-2 -right-2 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 opacity-90 hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:!bg-red-500 hover:!text-white hover:!border-red-500 transition-all duration-200"
                     title="Remove from continue reading"
                   >
                     ✕
@@ -371,11 +373,11 @@ function Home() {
                 onClick={() => openReader(book.id)}
                 className="cursor-pointer group"
               >
-                <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
-                  <img src={book.cover} className="object-cover w-full h-full transition duration-500 group-hover:scale-105" alt="" />
+                <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md md:group-hover:shadow-xl transition-all duration-300 md:group-hover:-translate-y-1">
+                  <img src={book.cover} className="object-cover w-full h-full transition duration-500 md:group-hover:scale-105" alt="" />
                   <button
                     onClick={(e) => toggleWishlist(book.id, e)}
-                    className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-full shadow transition-all duration-200 opacity-90 hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                   >
                     <Heart size={14} className={isWishlisted(book.id) ? "fill-red-500 text-red-500" : "text-gray-600 dark:text-gray-300"} />
                   </button>

@@ -10,6 +10,12 @@
 <style>
   html, body { height: 100%; overflow: hidden; }
   body { -webkit-font-smoothing: antialiased; }
+  #reader{
+    background-color:#f4efe6;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.7), transparent 26%),
+      linear-gradient(135deg, #f7f2ea 0%, #e7ded0 100%);
+  }
   .page-body{
     font-size: var(--rfs, 16px);
     line-height: var(--rlh, 1.65);
@@ -17,10 +23,86 @@
     word-break: break-word;
     hyphens: auto;
   }
+  #readingView{
+    background: transparent;
+    filter: drop-shadow(0 22px 34px rgba(76, 61, 40, .18));
+  }
+  #spread{
+    position: relative;
+    background: #f7f1e6;
+    box-shadow:
+      0 18px 42px rgba(72, 55, 34, .22),
+      0 2px 0 rgba(255,255,255,.7) inset,
+      0 -1px 0 rgba(80,60,36,.08) inset;
+  }
+  #spread::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background-image:
+      radial-gradient(rgba(105, 83, 49, .08) 1px, transparent 1px),
+      linear-gradient(90deg, transparent calc(50% - 1px), rgba(74, 56, 33, .12) 50%, transparent calc(50% + 1px));
+    background-size: 18px 18px, 100% 100%;
+    opacity:.35;
+    mix-blend-mode:multiply;
+    z-index:1;
+  }
+  #leftPage, #rightPage{
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.55), rgba(255,255,255,0) 12%),
+      #fbf7ef;
+  }
+  #leftPage::after, #rightPage::after{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:18px;
+    pointer-events:none;
+    z-index:2;
+  }
+  #leftPage::after{
+    right:0;
+    background: linear-gradient(90deg, transparent, rgba(88, 65, 36, .12));
+  }
+  #rightPage::after{
+    left:0;
+    background: linear-gradient(90deg, rgba(88, 65, 36, .14), transparent);
+  }
+  #leftBody, #rightBody, #leftFolio, #rightFolio{
+    position:relative;
+    z-index:3;
+  }
+  .dark #reader{
+    background-color:#141414;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.05), transparent 28%),
+      linear-gradient(135deg, #191815 0%, #0e0e0d 100%);
+  }
+  .dark #spread{
+    background:#27241f;
+    box-shadow:
+      0 18px 42px rgba(0,0,0,.45),
+      0 1px 0 rgba(255,255,255,.05) inset;
+  }
+  .dark #spread::before{
+    background-image:
+      radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+      linear-gradient(90deg, transparent calc(50% - 1px), rgba(0,0,0,.35) 50%, transparent calc(50% + 1px));
+    opacity:.45;
+    mix-blend-mode:screen;
+  }
+  .dark #leftPage, .dark #rightPage{
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,0) 12%),
+      #25231f;
+  }
   #measure{ position: fixed; left: -99999px; top: 0; visibility: hidden; pointer-events: none; }
   .hide { display: none !important; }
   .no-sb::-webkit-scrollbar{ display:none; }
   .no-sb{ scrollbar-width:none; }
+  #readerControlsPanel{ z-index:55; }
   #coverView, #introView{ max-width:100%; max-height:100%; }
   @media (min-width: 768px){
     #coverView, #introView{ max-width:50%; }
@@ -28,81 +110,83 @@
   @media (max-width: 767px){
     #rightPage{ display:none !important; }
     #leftPage{ border-right-width:0 !important; }
+    #spread::before{
+      background-image: radial-gradient(rgba(105, 83, 49, .08) 1px, transparent 1px);
+    }
+    .dark #spread::before{
+      background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
+    }
+    #leftPage::after{ display:none; }
   }
 </style>
 </head>
 <body class="bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] dark:from-[#1a1a1a] dark:to-[#0d0d0d]">
 
-<div id="reader" class="fixed inset-0 flex overflow-hidden select-none" style="background-color:#f8f9fa;">
+<div id="reader" class="fixed inset-0 flex overflow-hidden select-none">
 
-  <!-- ============ SETTINGS SHEET ============ -->
-  <div id="settingsOverlay" class="hide fixed inset-0 z-[1100] bg-black/30"></div>
-  <div id="settingsSheet" class="hide fixed bottom-0 left-0 right-0 z-[1100] bg-white dark:bg-gray-800 rounded-t-2xl shadow-2xl max-h-[60vh] overflow-y-auto no-sb">
-    <div class="sticky top-0 z-10 px-4 py-3 bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <i data-lucide="settings" class="w-[18px] h-[18px] text-blue-500"></i>
-          <h3 class="text-base font-semibold dark:text-white">Settings</h3>
-        </div>
-        <button id="settingsClose" class="p-1 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-          <i data-lucide="x" class="w-4 h-4 dark:text-white"></i>
-        </button>
-      </div>
-    </div>
-    <div class="p-4 space-y-4">
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-1.5">
-            <i data-lucide="type" class="w-[14px] h-[14px] text-blue-500"></i>
-            <label class="text-xs font-medium dark:text-white">Font Size</label>
+  <!-- ============ READER CONTROLS POPUP ============ -->
+  <div id="readerControls" class="absolute z-50 top-3 right-3 flex flex-col items-end gap-2">
+    <div class="relative">
+      <button id="settingsBtn" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2" title="Reader settings">
+        <i data-lucide="settings" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i>
+      </button>
+      <div id="readerControlsPanel" class="hidden absolute right-0 mt-2 w-[min(340px,calc(100vw-2rem))] rounded-3xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+        <div class="space-y-4">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="type" class="w-[14px] h-[14px] text-blue-500"></i>
+                <label class="text-xs font-medium dark:text-white">Font Size</label>
+              </div>
+              <span id="fsVal" class="px-2 py-0.5 text-[10px] font-medium text-blue-600 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-400">16px</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button data-fs="-1" class="fsBtn p-2 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="minus" class="w-3 h-3 dark:text-white"></i></button>
+              <input id="fsRange" type="range" min="12" max="28" value="16" class="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700">
+              <button data-fs="1" class="fsBtn p-2 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="plus" class="w-3 h-3 dark:text-white"></i></button>
+            </div>
           </div>
-          <span id="fsVal" class="px-1.5 py-0.5 text-[10px] font-medium text-blue-600 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-400">16px</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <button data-fs="-1" class="fsBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="minus" class="w-3 h-3 dark:text-white"></i></button>
-          <input id="fsRange" type="range" min="12" max="28" value="16" class="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700">
-          <button data-fs="1" class="fsBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="plus" class="w-3 h-3 dark:text-white"></i></button>
-        </div>
-      </div>
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-1.5">
-            <i data-lucide="align-left" class="w-[14px] h-[14px] text-blue-500"></i>
-            <label class="text-xs font-medium dark:text-white">Line Height</label>
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-1.5">
+                <i data-lucide="align-left" class="w-[14px] h-[14px] text-blue-500"></i>
+                <label class="text-xs font-medium dark:text-white">Line Height</label>
+              </div>
+              <span id="lhVal" class="px-2 py-0.5 text-[10px] font-medium text-blue-600 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-400">1.65</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button data-lh="-0.1" class="lhBtn p-2 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="minus" class="w-3 h-3 dark:text-white"></i></button>
+              <input id="lhRange" type="range" min="1.2" max="2.0" step="0.05" value="1.65" class="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700">
+              <button data-lh="0.1" class="lhBtn p-2 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="plus" class="w-3 h-3 dark:text-white"></i></button>
+            </div>
           </div>
-          <span id="lhVal" class="px-1.5 py-0.5 text-[10px] font-medium text-blue-600 bg-blue-100 rounded-full dark:bg-blue-900/30 dark:text-blue-400">1.65</span>
+          <div>
+            <div class="flex items-center gap-1.5 mb-2">
+              <i data-lucide="palette" class="w-[14px] h-[14px] text-blue-500"></i>
+              <label class="text-xs font-medium dark:text-white">Font</label>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button data-ff="serif" class="ffBtn py-2 rounded-lg text-xs font-serif">Serif</button>
+              <button data-ff="sans" class="ffBtn py-2 rounded-lg text-xs font-sans">Sans</button>
+              <button data-ff="mono" class="ffBtn py-2 rounded-lg text-xs font-mono">Mono</button>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5 mb-2">
+              <i data-lucide="sun" class="w-[14px] h-[14px] text-blue-500"></i>
+              <i data-lucide="moon" class="w-[14px] h-[14px] text-blue-500"></i>
+              <label class="text-xs font-medium dark:text-white">Theme</label>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="themeLight" class="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs"><i data-lucide="sun" class="w-3 h-3"></i><span>Light</span></button>
+              <button id="themeDark" class="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs"><i data-lucide="moon" class="w-3 h-3"></i><span>Dark</span></button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <button id="fsToggle" class="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs bg-gray-100 dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="maximize-2" class="w-3 h-3"></i><span id="fsToggleLabel">Fullscreen</span></button>
+            <button id="resetBtn" class="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100"><i data-lucide="rotate-ccw" class="w-3 h-3"></i><span>Reset</span></button>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button data-lh="-0.1" class="lhBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="minus" class="w-3 h-3 dark:text-white"></i></button>
-          <input id="lhRange" type="range" min="1.2" max="2.0" step="0.05" value="1.65" class="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-700">
-          <button data-lh="0.1" class="lhBtn p-1.5 bg-gray-100 rounded-lg dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="plus" class="w-3 h-3 dark:text-white"></i></button>
-        </div>
-      </div>
-      <div>
-        <div class="flex items-center gap-1.5 mb-2">
-          <i data-lucide="palette" class="w-[14px] h-[14px] text-blue-500"></i>
-          <label class="text-xs font-medium dark:text-white">Font</label>
-        </div>
-        <div class="grid grid-cols-3 gap-1.5">
-          <button data-ff="serif" class="ffBtn py-1.5 px-2 rounded-lg text-xs font-serif">Serif</button>
-          <button data-ff="sans"  class="ffBtn py-1.5 px-2 rounded-lg text-xs font-sans">Sans</button>
-          <button data-ff="mono"  class="ffBtn py-1.5 px-2 rounded-lg text-xs font-mono">Mono</button>
-        </div>
-      </div>
-      <div>
-        <div class="flex items-center gap-1.5 mb-2">
-          <i data-lucide="sun" class="w-[14px] h-[14px] text-blue-500"></i>
-          <i data-lucide="moon" class="w-[14px] h-[14px] text-blue-500"></i>
-          <label class="text-xs font-medium dark:text-white">Theme</label>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <button id="themeLight" class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs"><i data-lucide="sun" class="w-3 h-3"></i><span>Light</span></button>
-          <button id="themeDark"  class="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs"><i data-lucide="moon" class="w-3 h-3"></i><span>Dark</span></button>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-        <button id="fsToggle" class="flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"><i data-lucide="maximize-2" class="w-3 h-3"></i><span id="fsToggleLabel">Fullscreen</span></button>
-        <button id="resetBtn" class="flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100"><i data-lucide="rotate-ccw" class="w-3 h-3"></i><span>Reset</span></button>
       </div>
     </div>
   </div>
@@ -130,21 +214,20 @@
   <div class="relative flex flex-col items-center justify-center flex-1 h-full min-h-0 gap-1.5 px-1.5 py-1.5 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 md:px-3 md:py-3">
 
     <div class="absolute z-50 flex gap-2 top-2 left-2">
-      <button id="backBtn" title="Back" class="p-1.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="arrow-left" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
-      <button id="tocBtn" class="p-1.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="menu" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
-      <button id="settingsBtn" class="p-1.5 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="settings" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+      <button id="backBtn" title="Back" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="arrow-left" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+      <button id="tocBtn" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="menu" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
     </div>
 
     <div class="absolute top-0 left-0 right-0 z-40 h-0.5 bg-gray-200 dark:bg-gray-700">
       <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300" style="width:0%"></div>
     </div>
 
-    <h2 id="titleEl" class="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wide font-medium text-gray-400 dark:text-gray-500 text-center px-4 pt-12 sm:px-24 sm:pt-5 md:pt-6 shrink-0"></h2>
+    <h2 id="titleEl" class="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wide font-medium text-[#9b8a72] dark:text-gray-500 text-center px-4 pt-12 sm:px-24 sm:pt-5 md:pt-6 shrink-0"></h2>
 
     <div class="relative flex justify-center flex-1 w-full min-h-0 overflow-hidden">
 
       <!-- COVER -->
-      <div id="coverView" class="hide items-center justify-center h-full overflow-hidden bg-white rounded-lg shadow-2xl cursor-pointer dark:bg-gray-800">
+      <div id="coverView" class="hide items-center justify-center h-full overflow-hidden bg-[#fbf7ef] rounded-lg shadow-2xl cursor-pointer dark:bg-gray-800">
         <img id="coverImg" class="object-contain w-auto h-full max-w-full" alt="Cover" />
         <div id="coverFallback" class="hide flex items-center justify-center w-full h-full p-6 bg-gradient-to-br from-blue-500 to-indigo-700">
           <h1 id="coverFallbackTitle" class="font-serif text-lg tracking-wide text-center text-white md:text-2xl"></h1>
@@ -163,22 +246,22 @@
       </div>
 
       <!-- READING -->
-      <div id="readingView" class="hide w-full h-full min-h-0 p-1 rounded-lg bg-white/80 dark:bg-gray-800/80 shadow-2xl sm:p-1.5 md:p-2">
-        <div id="spread" class="flex w-full h-full min-h-0 overflow-hidden text-gray-800 bg-white rounded-lg shadow-xl cursor-pointer dark:text-gray-200 dark:bg-gray-800">
-          <div id="leftPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden bg-white border-r border-gray-200 dark:border-gray-700 dark:bg-gray-800">
-            <div id="leftBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-2 pt-2 pb-1 text-justify text-gray-700 dark:text-gray-300 sm:px-3 sm:pt-3 sm:pb-2 md:px-4 md:pt-4 md:pb-3 lg:px-5"></div>
-            <div id="leftFolio" class="text-center font-mono text-gray-400 dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
+      <div id="readingView" class="hide w-full h-full min-h-0 p-1 rounded-lg sm:p-1.5 md:p-2">
+        <div id="spread" class="flex w-full h-full min-h-0 overflow-hidden text-[#3f4654] rounded-lg cursor-pointer dark:text-gray-200">
+          <div id="leftPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden border-r border-[#d8c8ae] dark:border-gray-700">
+            <div id="leftBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-5 pt-5 pb-2 text-justify text-[#3f4654] dark:text-gray-300 sm:px-6 sm:pt-6 sm:pb-3 md:px-7 md:pt-7 md:pb-4 lg:px-8"></div>
+            <div id="leftFolio" class="text-center font-mono text-[#b1a18a] dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
           </div>
-          <div id="rightPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden bg-white dark:bg-gray-800">
-            <div id="rightBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-2 pt-2 pb-1 text-justify text-gray-700 dark:text-gray-300 sm:px-3 sm:pt-3 sm:pb-2 md:px-4 md:pt-4 md:pb-3 lg:px-5"></div>
-            <div id="rightFolio" class="text-center font-mono text-gray-400 dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
+          <div id="rightPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div id="rightBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-5 pt-5 pb-2 text-justify text-[#3f4654] dark:text-gray-300 sm:px-6 sm:pt-6 sm:pb-3 md:px-7 md:pt-7 md:pb-4 lg:px-8"></div>
+            <div id="rightFolio" class="text-center font-mono text-[#b1a18a] dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
           </div>
         </div>
       </div>
 
     </div>
 
-    <div class="flex gap-3 text-[8px] text-gray-400 dark:text-gray-500 shrink-0 pb-0.5 sm:gap-4 sm:text-[9px] md:text-[10px]">
+    <div class="flex gap-3 text-[8px] text-[#a89880] dark:text-gray-500 shrink-0 pb-0.5 sm:gap-4 sm:text-[9px] md:text-[10px]">
       <span>← Tap left</span><span>Tap right →</span>
     </div>
   </div>
@@ -401,7 +484,7 @@ function markThemeButtons(){
 }
 function setTheme(dark){
   document.documentElement.classList.toggle('dark',dark);
-  reader.style.backgroundColor = dark ? '#1a1a1a' : '#f8f9fa';
+  reader.style.backgroundColor = dark ? '#141414' : '#f4efe6';
   try{ localStorage.setItem('reader-dark-mode', String(dark)); }catch(e){}
   markThemeButtons();
 }
@@ -451,10 +534,9 @@ $('backBtn').addEventListener('click',()=>{ if(document.referrer && new URL(docu
 $('tocBtn').addEventListener('click',openToc);
 $('tocClose').addEventListener('click',closeToc);
 $('tocOverlay').addEventListener('click',closeToc);
-$('settingsBtn').addEventListener('click',()=>{ $('settingsOverlay').classList.remove('hide'); $('settingsSheet').classList.remove('hide'); if(window.lucide) lucide.createIcons(); });
-function closeSettings(){ $('settingsOverlay').classList.add('hide'); $('settingsSheet').classList.add('hide'); }
-$('settingsClose').addEventListener('click',closeSettings);
-$('settingsOverlay').addEventListener('click',closeSettings);
+$('settingsBtn').addEventListener('click',(e)=>{ e.stopPropagation(); const panel=$('readerControlsPanel'); panel.classList.toggle('hidden'); if(!panel.classList.contains('hidden') && window.lucide) lucide.createIcons(); });
+document.addEventListener('click',()=>{ const panel=$('readerControlsPanel'); if(!panel.classList.contains('hidden')) panel.classList.add('hidden'); });
+$('readerControls').addEventListener('click',e=>e.stopPropagation());
 
 function changeFont(){ applyTypography(); saveSettings(); repaginate(); }
 $('fsRange').addEventListener('input',e=>{ fontSize=parseInt(e.target.value); changeFont(); });
@@ -475,7 +557,7 @@ if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>{ if(v
 
 /* ---------- boot ---------- */
 try{ if(localStorage.getItem('reader-dark-mode')==='true') document.documentElement.classList.add('dark'); }catch(e){}
-reader.style.backgroundColor = isDark() ? '#1a1a1a' : '#f8f9fa';
+reader.style.backgroundColor = isDark() ? '#141414' : '#f4efe6';
 
 async function fetchBooks(){
   const cands=['books.json','/books.json','/data/books.json','./data/books.json','/src/data/books.json'];
@@ -498,7 +580,8 @@ function fatal(html){ reader.innerHTML='<div class="flex flex-col items-center j
   if(window.lucide) lucide.createIcons();
 
   const saved=loadSaved();
-  if(saved){
+  const resumeParam = new URLSearchParams(location.search).get('resume') === 'true';
+  if(resumeParam && saved){
     chapterIndex=Math.min(Math.max(saved.chapter||0,0),BOOK.chapters.length-1);
     showView('reading');
     requestAnimationFrame(()=>{
