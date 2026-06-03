@@ -54,7 +54,7 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] dark:from-[#1a1a1a] dark:to-[#0d0d0d] transition-colors duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-[#fdfaf4] to-[#ede7da] dark:from-[#17150f] dark:to-[#0e0c08] transition-colors duration-500 select-none">
       <Navbar />
       <div className="pt-16 md:pt-20 lg:pt-24">
         <AnimatedRoutes />

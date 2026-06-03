@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 74 115">
+  <defs>
+    <linearGradient id="a" x1="0" y1="0" x2="0" y2="115" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#FDE68A"/>
+      <stop offset="42%"  stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+    <linearGradient id="nib" x1="0" y1="90" x2="0" y2="115" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#3B1A06"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── "d" letterform ── -->
+  <!-- Bowl: center (36, 68), outer R=30, inner R=18 -->
+  <!-- Stem: x 54–66, y 8–68 -->
+  <!-- At x=54 on outer circle: (54-36)²+(y-68)²=900 → y=68-√576=68-24=44 (top junction) -->
+  <!-- Inner circle right point: 36+18=54 ✓ (tangent to stem left edge) -->
+
+  <path fill-rule="evenodd" fill="url(#a)"
+    d="M 54 8
+       L 66 8
+       L 66 68
+       A 30 30 0 1 1 54 44
+       Z
+       M 54 68
+       A 18 18 0 0 0 18 68
+       A 18 18 0 0 0 54 68
+       Z"/>
+
+  <!-- ── Pen nib ── -->
+  <path fill="url(#nib)"
+    d="M 28 94
+       C 31 103, 36 112, 36 112
+       C 36 112, 41 103, 44 94
+       C 41 97.5, 36 99, 31 97.5
+       Z"/>
+  <line x1="36" y1="98" x2="36" y2="111"
+        stroke="rgba(0,0,0,0.18)" stroke-width="1.4" stroke-linecap="round"/>
+
+</svg>
