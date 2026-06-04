@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion as framerMotion } from "framer-motion";
 import { Menu, X, Home, Info, Mail, Moon, Sun, BarChart2 } from "lucide-react";
@@ -10,6 +10,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("reader-dark-mode") === "true");
   const location = useLocation();
+  const navRef = useRef(null);
 
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("reader-dark-mode");
@@ -23,10 +24,30 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+      if (window.scrollY > 10) setIsMenuOpen(false);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setIsMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
@@ -48,6 +69,7 @@ export default function Navbar() {
 
   return (
     <nav
+      ref={navRef}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? "glass shadow-lg border-b border-gray-200 dark:border-gray-800"
