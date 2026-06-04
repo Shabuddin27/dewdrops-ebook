@@ -130,16 +130,15 @@
   #bmarkHeader,#bmarkFooter{ background:rgba(255,250,241,0.72); }
   .dark #bmarkHeader,.dark #bmarkFooter{ background:rgba(22,20,16,0.72) !important; }
   /* don't include #bmarkInner here to prevent page blur when the bookmark drawer opens */
-  #readerControlsPanel, #hlPopup, #tocWrap > div.relative { backdrop-filter: blur(22px) saturate(1.15); -webkit-backdrop-filter: blur(22px) saturate(1.15); }
+  #readerControlsPanel, #hlPopup { backdrop-filter: blur(22px) saturate(1.15); -webkit-backdrop-filter: blur(22px) saturate(1.15); }
   #readerControlsPanel { background:rgba(255,250,241,0.92); border:1px solid rgba(210,190,160,0.28); box-shadow:0 32px 78px rgba(72,55,34,0.18); }
   .dark #readerControlsPanel { background:rgba(18,18,18,0.9); border-color:rgba(95,85,75,0.3); }
   #hlPopup { background:rgba(255,255,255,0.94); border:1px solid rgba(210,190,160,0.35); box-shadow:0 18px 48px rgba(72,55,34,0.2); }
   .dark #hlPopup { background:rgba(18,18,18,0.94); border-color:rgba(95,85,75,0.35); }
-  #tocWrap > div.relative { background:rgba(255,250,241,0.92); border-left:1px solid rgba(210,190,160,0.35); box-shadow:-18px 0 60px rgba(72,55,34,0.22); }
-  .dark #tocWrap > div.relative { background:rgba(18,18,18,0.92); border-color:rgba(95,85,75,0.35); }
-  #tocOverlay { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-  #bmarkInner { background:rgba(255,250,241,0.94); border-left:1px solid rgba(210,190,160,0.35); }
+  #bmarkInner { background:rgba(255,250,241,0.94); }
   .dark #bmarkInner { background:rgba(18,18,18,0.94) !important; }
+  .dark #tocInner { background:rgba(18,18,16,0.94) !important; border-color:rgba(80,65,45,0.5) !important; }
+  .dark #tocHeader { background:rgba(22,20,16,0.72) !important; border-color:rgba(80,65,45,0.4) !important; }
   #titleEl { max-width:88vw; white-space:normal; word-break:break-word; line-height:1.2; }
 </style>
 </head>
@@ -214,22 +213,22 @@
     </div>
   </div>
 
-  <!-- ============ TABLE OF CONTENTS DRAWER ============ -->
-  <div id="tocWrap" class="hide fixed inset-0 z-[1000] flex">
-    <div id="tocOverlay" class="absolute inset-0 bg-black/30"></div>
-    <div class="relative w-[260px] sm:w-[280px] bg-white dark:bg-gray-800 h-full overflow-y-auto shadow-2xl no-sb">
-      <div class="sticky top-0 z-10 bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-        <div class="flex items-center justify-between p-3 sm:p-4">
-          <div class="flex items-center gap-1.5 sm:gap-2">
-            <i data-lucide="book-open" class="w-4 h-4 text-gray-600 dark:text-gray-400"></i>
-            <h2 class="text-xs font-semibold text-gray-700 dark:text-gray-300 sm:text-sm">Contents</h2>
+  <!-- ============ TABLE OF CONTENTS PANEL ============ -->
+  <div id="tocWrap" class="hide fixed inset-0 z-[1000]" style="pointer-events:none">
+    <div id="tocOverlay" class="absolute inset-0" style="background:transparent;pointer-events:none"></div>
+    <div id="tocInner" class="absolute left-2 top-12 w-[min(316px,calc(100vw-1rem))] max-h-[72vh] flex flex-col rounded-2xl overflow-hidden no-sb" style="background:rgba(255,250,241,0.96);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border:1px solid rgba(210,190,160,0.45);box-shadow:0 14px 44px rgba(72,55,34,0.22),0 1.5px 0 rgba(255,255,255,0.6) inset;pointer-events:auto">
+      <div id="tocHeader" class="sticky top-0 z-10 border-b flex-shrink-0" style="border-color:rgba(210,190,160,0.38);background:rgba(255,250,241,0.72)">
+        <div class="flex items-center justify-between px-4 py-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="book-open" class="w-3.5 h-3.5 text-amber-500"></i>
+            <h2 class="text-[10.5px] font-bold text-[#5a4a35] dark:text-[#d4c4a8]" style="letter-spacing:0.05em;text-transform:uppercase">Contents</h2>
           </div>
-          <button id="tocClose" class="p-1 text-gray-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-            <i data-lucide="x" class="w-4 h-4"></i>
+          <button id="tocClose" class="p-1.5 rounded-lg text-[#9b8a72] dark:text-gray-400 hover:bg-black/8 active:scale-95 transition-all">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
-      <div class="p-1.5 sm:p-2" id="tocList"></div>
+      <div class="flex-1 overflow-y-auto no-sb p-1.5" id="tocList"></div>
     </div>
   </div>
 
@@ -674,7 +673,7 @@ function buildBmarkList(){
   if(window.lucide) lucide.createIcons({element: list});
 }
 
-function openBmarkDrawer(){ closeSearch(); closeHighlightsDrawer(); closeSettingsPanel(); $('bmarkWrap').classList.remove('hide'); buildBmarkList(); }
+function openBmarkDrawer(){ closeSearch(); closeHighlightsDrawer(); closeToc(); closeSettingsPanel(); $('bmarkWrap').classList.remove('hide'); buildBmarkList(); }
 function closeBmarkDrawer(){ $('bmarkWrap').classList.add('hide'); }
 
 /* ─── Chapter completion ────────────────────────────────────────── */
@@ -754,7 +753,7 @@ function hlDashColor(rgba){
   if(rgba.includes('254,202,202')) return '#b83030';
   return '#c47d2a';
 }
-function openHighlightsDrawer(){ closeSearch(); closeBmarkDrawer(); closeSettingsPanel(); $('hlNotesWrap').classList.remove('hide'); buildHighlightsList(); if(window.lucide) lucide.createIcons({element:$('hlNotesWrap')}); }
+function openHighlightsDrawer(){ closeSearch(); closeBmarkDrawer(); closeToc(); closeSettingsPanel(); $('hlNotesWrap').classList.remove('hide'); buildHighlightsList(); if(window.lucide) lucide.createIcons({element:$('hlNotesWrap')}); }
 function closeHighlightsDrawer(){ $('hlNotesWrap').classList.add('hide'); }
 function buildHighlightsList(){
   const list=$('hlNotesList');
@@ -988,35 +987,56 @@ function prev(){
 /* ─── TOC ───────────────────────────────────────────────────────── */
 function buildToc(){
   const list=$('tocList');
-  let html = '<div data-toc="cover" class="toc-item flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 mb-1 rounded-lg cursor-pointer">'
-    + '<i data-lucide="home" class="w-[14px] h-[14px]"></i>'
-    + '<span class="text-xs font-medium sm:text-sm">Cover</span></div>'
-    + '<div class="my-1.5 border-t border-gray-100 dark:border-gray-700 sm:my-2"></div>';
-  html += BOOK.chapters.map((ch,i)=>
-    '<div data-toc="'+i+'" class="toc-item flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 mb-1 rounded-lg cursor-pointer">'
-    + '<span class="w-4 text-[10px] font-medium text-gray-400 dark:text-gray-500 sm:w-5 sm:text-xs">'+(i+1)+'</span>'
-    + '<span class="flex-1 text-[11px] truncate sm:text-sm">'+(ch.title || ('Chapter '+(i+1)))+'</span>'
-    + '<i data-lucide="check-circle-2" class="toc-check w-3.5 h-3.5 text-emerald-500 flex-shrink-0'+(completedChapters.has(i)?'':' hide')+'"></i>'
-    + '</div>'
-  ).join('');
+  const dark=isDark();
+  const textClr=dark?'#d4c4a8':'#3a2e1f';
+  const subClr=dark?'#c4a060':'#c47d2a';
+  const itemBg=dark?'rgba(255,255,255,0.06)':'rgba(255,255,255,0.88)';
+  const borderClr=dark?'rgba(255,255,255,0.08)':'rgba(210,190,160,0.32)';
+  const hoverBg=dark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.05)';
+  const accent='#d97706';
+
+  let html='<div data-toc="cover" class="toc-item" style="display:flex;align-items:stretch;margin:6px 6px;border-radius:16px;cursor:pointer;transition:transform 0.16s,background 0.16s;overflow:hidden;background:'+itemBg+';border:1px solid '+borderClr+'"'
+    +' onmouseenter="this.style.background=\''+hoverBg+'\';this.style.transform=\'translateY(-1px)\'"'
+    +' onmouseleave="this.style.background=\''+itemBg+'\';this.style.transform=\'translateY(0)\'">'
+    +'<div style="width:4px;background:'+accent+';border-radius:4px 0 0 4px;flex-shrink:0"></div>'
+    +'<div style="flex:1;min-width:0;padding:10px 12px;display:flex;align-items:center;gap:8px">'
+    +'<i data-lucide="home" style="width:12px;height:12px;flex-shrink:0;color:'+subClr+'"></i>'
+    +'<span style="font-size:10px;font-style:italic;color:'+textClr+';line-height:1.4">Cover</span>'
+    +'</div></div>';
+
+  html+=BOOK.chapters.map((ch,i)=>{
+    const done=completedChapters.has(i);
+    return '<div data-toc="'+i+'" class="toc-item" style="display:flex;align-items:stretch;margin:6px 6px;border-radius:16px;cursor:pointer;transition:transform 0.16s,background 0.16s;overflow:hidden;background:'+itemBg+';border:1px solid '+borderClr+'"'
+      +' onmouseenter="this.style.background=\''+hoverBg+'\';this.style.transform=\'translateY(-1px)\'"'
+      +' onmouseleave="this.style.background=\''+itemBg+'\';this.style.transform=\'translateY(0)\'">'
+      +'<div style="width:4px;background:'+accent+';border-radius:4px 0 0 4px;flex-shrink:0"></div>'
+      +'<div style="flex:1;min-width:0;padding:9px 12px">'
+      +'<p style="font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:'+subClr+';line-height:1.4;margin:0">Ch. '+(i+1)+'</p>'
+      +'<p style="font-size:10px;font-style:italic;color:'+textClr+';line-height:1.4;word-break:break-word;margin:3px 0 0">'+escHtml(ch.title||'Chapter '+(i+1))+'</p>'
+      +'</div>'
+      +'<i data-lucide="check-circle-2" class="toc-check flex-shrink-0'+(done?'':' hide')+'" style="width:13px;height:13px;color:#10b981;margin:10px 10px 0 0"></i>'
+      +'</div>';
+  }).join('');
+
   list.innerHTML=html;
   list.querySelectorAll('.toc-item').forEach(el=>{
     el.addEventListener('click',()=>{ const t=el.dataset.toc; closeToc(); if(t==='cover') showCover(); else showIntro(Number(t)); });
   });
-  if(window.lucide) lucide.createIcons();
+  if(window.lucide) lucide.createIcons({element:list});
   markToc();
 }
 function markToc(){
+  const dark=isDark();
+  const itemBg=dark?'rgba(255,255,255,0.06)':'rgba(255,255,255,0.88)';
+  const borderClr=dark?'rgba(255,255,255,0.08)':'rgba(210,190,160,0.32)';
   document.querySelectorAll('#tocList .toc-item').forEach(el=>{
     const t=el.dataset.toc;
-    const active = (t==='cover' && view==='cover') || (t!=='cover' && view!=='cover' && Number(t)===chapterIndex);
-    el.classList.toggle('bg-gray-100', active); el.classList.toggle('dark:bg-gray-700', active);
-    el.classList.toggle('text-gray-900', active); el.classList.toggle('dark:text-white', active);
-    el.classList.toggle('text-gray-600', !active); el.classList.toggle('dark:text-gray-400', !active);
-    el.classList.toggle('hover:bg-gray-50', !active); el.classList.toggle('dark:hover:bg-gray-700', !active);
+    const active=(t==='cover'&&view==='cover')||(t!=='cover'&&view!=='cover'&&Number(t)===chapterIndex);
+    el.style.background=active?'rgba(251,191,36,0.18)':itemBg;
+    el.style.borderColor=active?'rgba(217,119,6,0.5)':borderClr;
   });
 }
-function openToc(){ $('tocWrap').classList.remove('hide'); }
+function openToc(){ closeSearch(); closeHighlightsDrawer(); closeBmarkDrawer(); closeSettingsPanel(); $('tocWrap').classList.remove('hide'); buildToc(); }
 function closeToc(){ $('tocWrap').classList.add('hide'); }
 
 /* ─── Settings ──────────────────────────────────────────────────── */
@@ -1085,7 +1105,7 @@ function hasTextSelection(){
   return sel && !sel.isCollapsed && sel.toString().trim().length > 0;
 }
 function anyPanelOpen(){
-  return !$('bmarkWrap').classList.contains('hide') || !$('hlNotesWrap').classList.contains('hide');
+  return !$('bmarkWrap').classList.contains('hide') || !$('hlNotesWrap').classList.contains('hide') || !$('tocWrap').classList.contains('hide');
 }
 function tapHandler(el){
   el.addEventListener('click',(e)=>{
@@ -1116,9 +1136,8 @@ spread.addEventListener('touchend', () => setTimeout(handleTextSelection, 80));
 
 /* ─── Button wiring ─────────────────────────────────────────────── */
 $('backBtn').addEventListener('click',()=>{ if(document.referrer && new URL(document.referrer).origin===location.origin) history.back(); else location.href='/'; });
-$('tocBtn').addEventListener('click',openToc);
+$('tocBtn').addEventListener('click', e=>{ e.stopPropagation(); $('tocWrap').classList.contains('hide')?openToc():closeToc(); });
 $('tocClose').addEventListener('click',closeToc);
-$('tocOverlay').addEventListener('click',closeToc);
 
 $('bmarkBtn').addEventListener('click', e=>{ e.stopPropagation(); $('bmarkWrap').classList.contains('hide')?openBmarkDrawer():closeBmarkDrawer(); });
 $('bmarkClose').addEventListener('click',closeBmarkDrawer);
@@ -1143,6 +1162,7 @@ document.addEventListener('click', e=>{
   if(!$('searchBar').classList.contains('hide') && !$('searchBar').contains(e.target) && !$('searchBtn').contains(e.target)) closeSearch();
   if(!$('hlNotesWrap').classList.contains('hide') && !$('hlNotesWrap').contains(e.target) && !$('hlNotesBtn').contains(e.target)) closeHighlightsDrawer();
   if(!$('bmarkWrap').classList.contains('hide') && !$('bmarkWrap').contains(e.target) && !$('bmarkBtn').contains(e.target)) closeBmarkDrawer();
+  if(!$('tocWrap').classList.contains('hide') && !$('tocInner').contains(e.target) && !$('tocBtn').contains(e.target)) closeToc();
 });
 $('readerControls').addEventListener('click',e=>e.stopPropagation());
 
