@@ -1,0 +1,18 @@
+{
+  "name": "DewDrop Stories",
+  "short_name": "DewDrop",
+  "description": "An immersive digital reading experience for folklore and stories.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fdfaf4",
+  "theme_color": "#D97706",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

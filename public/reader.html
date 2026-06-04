@@ -118,6 +118,29 @@
     }
     #leftPage::after{ display:none; }
   }
+  /* highlights */
+  mark[data-hlid]{ cursor:pointer; border-radius:2px; }
+  /* floating panels – dark mode glass */
+  .dark #hlNotesWrap{ background:rgba(22,20,16,0.88) !important; border-color:rgba(80,65,45,0.5) !important; box-shadow:0 8px 32px rgba(0,0,0,0.5),0 1px 0 rgba(255,255,255,0.04) inset !important; }
+  .dark #hlNotesWrap .flex-shrink-0{ border-color:rgba(80,65,45,0.4) !important; }
+  .dark #hlNotesWrap span{ color:#d4c4a8; }
+  .dark #hlNotesWrap button{ color:#9b8a72; }
+  /* bookmarks glass panel */
+  /* keep header/footer background but avoid blurring the page when bookmarks open */
+  #bmarkHeader,#bmarkFooter{ background:rgba(255,250,241,0.72); }
+  .dark #bmarkHeader,.dark #bmarkFooter{ background:rgba(22,20,16,0.72) !important; }
+  /* don't include #bmarkInner here to prevent page blur when the bookmark drawer opens */
+  #readerControlsPanel, #hlPopup, #tocWrap > div.relative { backdrop-filter: blur(22px) saturate(1.15); -webkit-backdrop-filter: blur(22px) saturate(1.15); }
+  #readerControlsPanel { background:rgba(255,250,241,0.92); border:1px solid rgba(210,190,160,0.28); box-shadow:0 32px 78px rgba(72,55,34,0.18); }
+  .dark #readerControlsPanel { background:rgba(18,18,18,0.9); border-color:rgba(95,85,75,0.3); }
+  #hlPopup { background:rgba(255,255,255,0.94); border:1px solid rgba(210,190,160,0.35); box-shadow:0 18px 48px rgba(72,55,34,0.2); }
+  .dark #hlPopup { background:rgba(18,18,18,0.94); border-color:rgba(95,85,75,0.35); }
+  #tocWrap > div.relative { background:rgba(255,250,241,0.92); border-left:1px solid rgba(210,190,160,0.35); box-shadow:-18px 0 60px rgba(72,55,34,0.22); }
+  .dark #tocWrap > div.relative { background:rgba(18,18,18,0.92); border-color:rgba(95,85,75,0.35); }
+  #tocOverlay { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  #bmarkInner { background:rgba(255,250,241,0.94); border-left:1px solid rgba(210,190,160,0.35); }
+  .dark #bmarkInner { background:rgba(18,18,18,0.94) !important; }
+  #titleEl { max-width:88vw; white-space:normal; word-break:break-word; line-height:1.2; }
 </style>
 </head>
 <body class="bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] dark:from-[#1a1a1a] dark:to-[#0d0d0d]">
@@ -210,19 +233,116 @@
     </div>
   </div>
 
+  <!-- ============ BOOKMARKS DRAWER (right side) ============ -->
+  <div id="bmarkWrap" class="hide fixed inset-0 z-[1000]" style="pointer-events:none">
+    <div id="bmarkOverlay" class="absolute inset-0" style="background:transparent;pointer-events:none;z-index:40"></div>
+    <div id="bmarkInner" class="absolute left-2 top-12 w-[min(316px,calc(100vw-1rem))] max-h-[72vh] flex flex-col rounded-2xl overflow-hidden no-sb" style="background:rgba(255,250,241,0.98);border:1px solid rgba(210,190,160,0.45);box-shadow:0 14px 44px rgba(72,55,34,0.22);z-index:1001;pointer-events:auto">
+      <div id="bmarkHeader" class="sticky top-0 z-10 border-b flex-shrink-0" style="border-color:rgba(210,190,160,0.38)">
+        <div class="flex items-center justify-between px-4 py-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="bookmark" class="w-3.5 h-3.5 text-amber-500"></i>
+            <h2 class="text-[10.5px] font-bold text-[#5a4a35] dark:text-[#d4c4a8]" style="letter-spacing:0.05em;text-transform:uppercase">Bookmarks</h2>
+          </div>
+          <button id="bmarkClose" class="p-1.5 rounded-lg text-[#9b8a72] dark:text-gray-400 hover:bg-black/8 active:scale-95 transition-all">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto no-sb p-1.5" id="bmarkList"></div>
+      <div id="bmarkFooter" class="p-3 border-t flex-shrink-0" style="border-color:rgba(210,190,160,0.38)">
+        <button id="addBmarkBtn" class="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white text-xs font-semibold rounded-xl transition-colors active:scale-95 shadow-md">
+          <i data-lucide="bookmark-plus" class="w-3.5 h-3.5"></i>
+          Add Bookmark Here
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HIGHLIGHTS & NOTES PANEL (floating glass) ============ -->
+  <div id="hlNotesWrap" class="hide fixed z-[100] top-12 sm:top-[3.5rem] left-2 w-[min(316px,calc(100vw-1rem))] max-h-[72vh] flex flex-col rounded-2xl overflow-hidden" style="background:rgba(255,250,241,0.88);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border:1px solid rgba(210,190,160,0.45);box-shadow:0 14px 44px rgba(72,55,34,0.22),0 1.5px 0 rgba(255,255,255,0.6) inset">
+    <div class="flex items-center justify-between px-3.5 py-2.5 border-b flex-shrink-0" style="border-color:rgba(210,190,160,0.35)">
+      <div class="flex items-center gap-2">
+        <i data-lucide="highlighter" class="w-3.5 h-3.5 text-amber-500"></i>
+        <span class="text-[10.5px] font-bold text-[#5a4a35]" style="letter-spacing:0.05em;text-transform:uppercase">Highlights &amp; Notes</span>
+      </div>
+      <button id="hlNotesClose" class="p-1 rounded-lg text-[#9b8a72] hover:bg-black/8 active:scale-95 transition-all">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto no-sb py-1.5" id="hlNotesList"></div>
+  </div>
+
+  <!-- ============ SEARCH BAR ============ -->
+  <div id="searchBar" class="hide fixed z-[55] top-12 sm:top-[3.25rem] left-2 right-2 sm:left-auto sm:right-14 sm:max-w-xs">
+    <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#fffaf1]/95 dark:bg-gray-800/95 border border-[#e2d2ba] dark:border-gray-700 rounded-xl shadow-lg backdrop-blur">
+      <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0"></i>
+      <input id="searchInput" type="text" placeholder="Find in chapter…" autocomplete="off" spellcheck="false"
+        class="flex-1 min-w-0 text-xs bg-transparent outline-none text-gray-800 dark:text-white placeholder:text-gray-400">
+      <span id="searchCount" class="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap tabular-nums"></span>
+      <button id="searchPrev" class="p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400" title="Previous (Shift+Enter)">
+        <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+      </button>
+      <button id="searchNext" class="p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400" title="Next (Enter)">
+        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+      </button>
+      <button id="searchClose" class="p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/10 text-gray-400" title="Close">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ HIGHLIGHT TOOLBAR ============ -->
+  <div id="hlToolbar" class="hide fixed z-[200] flex items-center gap-1 px-2 py-1.5 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700">
+    <button data-hlcolor="rgba(254,249,195,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-yellow-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Yellow"></button>
+    <button data-hlcolor="rgba(187,247,208,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-green-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Green"></button>
+    <button data-hlcolor="rgba(191,219,254,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-blue-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Blue"></button>
+    <button data-hlcolor="rgba(254,202,202,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-red-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Pink"></button>
+    <div class="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-0.5"></div>
+    <button id="hlNoteBtn" class="flex items-center gap-1 px-1.5 py-1 text-[10px] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap">
+      <i data-lucide="pencil-line" class="w-3 h-3"></i><span>Note</span>
+    </button>
+    <button id="hlCancelBtn" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+      <i data-lucide="x" class="w-3 h-3"></i>
+    </button>
+  </div>
+
+  <!-- ============ HIGHLIGHT POPUP (click on mark) ============ -->
+  <div id="hlPopup" class="hide fixed z-[210] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 p-3 max-w-[200px]">
+    <p id="hlPopupNote" class="text-[11px] text-gray-600 dark:text-gray-300 mb-2 italic leading-snug"></p>
+    <button id="hlPopupDel" class="flex items-center gap-1.5 text-[11px] text-red-500 hover:text-red-600 font-medium">
+      <i data-lucide="trash-2" class="w-3 h-3"></i> Remove highlight
+    </button>
+  </div>
+
+  <!-- ============ NOTE INPUT MODAL ============ -->
+  <div id="noteModal" class="hide fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="w-full max-w-xs bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-4">
+      <h3 class="text-sm font-semibold dark:text-white mb-2">Add Note</h3>
+      <p id="noteSelText" class="text-[11px] text-gray-500 dark:text-gray-400 mb-3 italic line-clamp-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-2 py-1.5"></p>
+      <textarea id="noteInput" rows="3" placeholder="Your note…" class="w-full text-xs border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 bg-white dark:bg-gray-800 dark:text-white outline-none focus:border-amber-400 resize-none"></textarea>
+      <div class="flex gap-2 mt-3">
+        <button id="noteSaveBtn" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition-colors">Save</button>
+        <button id="noteCancelBtn" class="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ MAIN AREA ============ -->
   <div class="relative flex flex-col items-center justify-center flex-1 h-full min-h-0 gap-1.5 px-1.5 py-1.5 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 md:px-3 md:py-3">
 
     <div class="absolute z-50 flex gap-2 top-2 left-2">
       <button id="backBtn" title="Back" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="arrow-left" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
       <button id="tocBtn" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="menu" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+      <button id="bmarkBtn" title="Bookmarks" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="bookmark" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+      <button id="hlNotesBtn" title="Highlights &amp; Notes" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="highlighter" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
+      <button id="searchBtn" title="Find in chapter (Ctrl+F)" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="search" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
     </div>
 
     <div class="absolute top-0 left-0 right-0 z-40 h-0.5 bg-gray-200 dark:bg-gray-700">
       <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300" style="width:0%"></div>
     </div>
 
-    <h2 id="titleEl" class="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wide font-medium text-[#9b8a72] dark:text-gray-500 text-center px-4 pt-12 sm:px-24 sm:pt-5 md:pt-6 shrink-0"></h2>
+    <h2 id="titleEl" class="text-[9.5px] sm:text-[10.5px] md:text-xs uppercase tracking-wide font-semibold text-[#9b8a72] dark:text-gray-400 text-center px-4 pt-12 sm:px-24 sm:pt-5 md:pt-6 shrink-0"></h2>
 
     <div class="relative flex justify-center flex-1 w-full min-h-0 overflow-hidden">
 
@@ -241,7 +361,7 @@
           <h1 id="introFallbackTitle" class="font-serif text-base tracking-wider text-center text-white sm:text-lg md:text-xl lg:text-2xl"></h1>
         </div>
         <div class="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none sm:bottom-4">
-          <p class="rounded-full bg-black/45 px-3 py-1 text-[8px] text-white/90 backdrop-blur-sm sm:text-[10px] md:text-xs">Tap to begin →</p>
+          <p id="introHint" class="rounded-full bg-black/45 px-3 py-1 text-[8px] text-white/90 backdrop-blur-sm sm:text-[10px] md:text-xs">Tap to begin →</p>
         </div>
       </div>
 
@@ -249,11 +369,11 @@
       <div id="readingView" class="hide w-full h-full min-h-0 p-1 rounded-lg sm:p-1.5 md:p-2">
         <div id="spread" class="flex w-full h-full min-h-0 overflow-hidden text-[#3f4654] rounded-lg cursor-pointer dark:text-gray-200">
           <div id="leftPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden border-r border-[#d8c8ae] dark:border-gray-700">
-            <div id="leftBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-5 pt-5 pb-2 text-justify text-[#3f4654] dark:text-gray-300 sm:px-6 sm:pt-6 sm:pb-3 md:px-7 md:pt-7 md:pb-4 lg:px-8"></div>
+            <div id="leftBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-5 pt-5 pb-2 text-justify text-[#3f4654] dark:text-gray-300 sm:px-6 sm:pt-6 sm:pb-3 md:px-7 md:pt-7 md:pb-4 lg:px-8 select-text"></div>
             <div id="leftFolio" class="text-center font-mono text-[#b1a18a] dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
           </div>
           <div id="rightPage" class="relative flex flex-col flex-1 min-h-0 overflow-hidden">
-            <div id="rightBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-5 pt-5 pb-2 text-justify text-[#3f4654] dark:text-gray-300 sm:px-6 sm:pt-6 sm:pb-3 md:px-7 md:pt-7 md:pb-4 lg:px-8"></div>
+            <div id="rightBody" class="page-body font-serif flex-1 min-h-0 overflow-hidden px-5 pt-5 pb-2 text-justify text-[#3f4654] dark:text-gray-300 sm:px-6 sm:pt-6 sm:pb-3 md:px-7 md:pt-7 md:pb-4 lg:px-8 select-text"></div>
             <div id="rightFolio" class="text-center font-mono text-[#b1a18a] dark:text-gray-500 py-1 shrink-0 text-[8px] sm:text-[9px] md:text-[10px]"></div>
           </div>
         </div>
@@ -288,13 +408,433 @@ let repaginating = false;
 const isMobile = () => window.innerWidth < 768;
 const isDark = () => document.documentElement.classList.contains('dark');
 
+/* ─── HTML escape helpers ──────────────────────────────────────── */
+function escHtml(t){
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(t){
+  return String(t).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* ─── Reading activity log ──────────────────────────────────────── */
+function logReadingActivity(){
+  try{
+    const today = new Date().toISOString().slice(0,10);
+    const raw = JSON.parse(localStorage.getItem('reading-log')) || {};
+    raw[today] = (raw[today] || 0) + 1;
+    localStorage.setItem('reading-log', JSON.stringify(raw));
+  }catch(e){}
+}
+
+/* ─── Highlights ────────────────────────────────────────────────── */
+const hlKey = () => `highlights-${BOOK ? BOOK.id : 'x'}`;
+let highlights = [];
+
+function loadHighlights(){
+  try{ highlights = JSON.parse(localStorage.getItem(hlKey())) || []; }catch{ highlights = []; }
+  if(!Array.isArray(highlights)) highlights = [];
+}
+function saveHighlights(){
+  try{ localStorage.setItem(hlKey(), JSON.stringify(highlights)); }catch(e){}
+}
+
+// Walk text nodes to get absolute char offset within container
+function getAbsoluteOffset(container, targetNode, offset){
+  let total = 0;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  while(walker.nextNode()){
+    if(walker.currentNode === targetNode) return total + offset;
+    total += walker.currentNode.length;
+  }
+  return total + offset;
+}
+
+let selState = null; // {chapterIndex, start, end, text}
+let pendingHlColor = null;
+
+function handleTextSelection(){
+  if(view !== 'reading'){ hideHlToolbar(); return; }
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0 || sel.isCollapsed){ hideHlToolbar(); return; }
+  const range = sel.getRangeAt(0);
+
+  let pageBody = null, pageIdx = -1;
+  const L = spreadStart();
+  if(leftBody.contains(range.commonAncestorContainer)){
+    pageBody = leftBody; pageIdx = L;
+  } else if(!isMobile() && rightBody.contains(range.commonAncestorContainer)){
+    pageBody = rightBody; pageIdx = L + 1;
+  }
+  if(!pageBody || pageIdx < 0 || pageIdx >= pages.length){ hideHlToolbar(); return; }
+
+  const pd = pages[pageIdx];
+  const startInPage = getAbsoluteOffset(pageBody, range.startContainer, range.startOffset);
+  const endInPage   = getAbsoluteOffset(pageBody, range.endContainer,   range.endOffset);
+  if(startInPage >= endInPage){ hideHlToolbar(); return; }
+
+  const txt = sel.toString().trim();
+  if(!txt){ hideHlToolbar(); return; }
+
+  selState = { chapterIndex, start: pd.start + startInPage, end: pd.start + endInPage, text: txt };
+
+  const rect = range.getBoundingClientRect();
+  showHlToolbar(rect);
+}
+
+function showHlToolbar(rect){
+  const tb = $('hlToolbar');
+  tb.classList.remove('hide');
+  if(window.lucide) lucide.createIcons({element: tb});
+  const tbW = tb.offsetWidth || 200;
+  const tbH = tb.offsetHeight || 36;
+  let x = rect.left + rect.width / 2 - tbW / 2;
+  let y = rect.top - tbH - 8;
+  if(y < 8) y = rect.bottom + 8;
+  x = Math.max(8, Math.min(x, window.innerWidth - tbW - 8));
+  tb.style.left = x + 'px'; tb.style.top = y + 'px';
+}
+
+function hideHlToolbar(){ $('hlToolbar').classList.add('hide'); selState = null; }
+
+function saveHighlight(color, note){
+  if(!selState) return;
+  // Remove any existing highlights that overlap with the selected range
+  highlights = highlights.filter(h =>
+    h.chapterIndex !== selState.chapterIndex ||
+    h.end <= selState.start ||
+    h.start >= selState.end
+  );
+  highlights.push({ id: Date.now(), chapterIndex: selState.chapterIndex,
+    start: selState.start, end: selState.end, text: selState.text || '', color, note: note || '' });
+  saveHighlights();
+  hideHlToolbar();
+  window.getSelection()?.removeAllRanges();
+  renderReading();
+}
+
+function showHlPopup(hl, rect){
+  const popup = $('hlPopup');
+  const noteEl = $('hlPopupNote');
+  noteEl.textContent = hl.note || '';
+  noteEl.classList.toggle('hidden', !hl.note);
+  popup.classList.remove('hide');
+  if(window.lucide) lucide.createIcons({element: popup});
+
+  const pw = popup.offsetWidth || 200;
+  const ph = popup.offsetHeight || 60;
+  let x = rect.left + rect.width / 2 - pw / 2;
+  let y = rect.bottom + 8;
+  if(y + ph > window.innerHeight - 8) y = rect.top - ph - 8;
+  x = Math.max(8, Math.min(x, window.innerWidth - pw - 8));
+  popup.style.left = x + 'px'; popup.style.top = y + 'px';
+
+  $('hlPopupDel').onclick = () => {
+    highlights = highlights.filter(h => h.id !== hl.id);
+    saveHighlights(); popup.classList.add('hide'); renderReading();
+  };
+
+  setTimeout(() => {
+    const close = () => { popup.classList.add('hide'); document.removeEventListener('click', close); };
+    document.addEventListener('click', close);
+  }, 50);
+}
+
+function renderPageText(pageText, pageStart){
+  const pageEnd = pageStart + pageText.length;
+  const ranges = [];
+  // User highlights
+  highlights.filter(h=>h.chapterIndex===chapterIndex&&h.start<pageEnd&&h.end>pageStart).forEach(h=>{
+    ranges.push({s:Math.max(0,h.start-pageStart),e:Math.min(pageText.length,h.end-pageStart),pri:1,color:h.color,hlid:h.id,note:h.note||''});
+  });
+  // Search matches (priority 2 = other, 3 = current)
+  if(searchActive&&searchQuery){
+    searchMatches.forEach((m,i)=>{
+      if(m.start<pageEnd&&m.end>pageStart){
+        ranges.push({s:Math.max(0,m.start-pageStart),e:Math.min(pageText.length,m.end-pageStart),pri:i===searchMatchIdx?3:2,cur:i===searchMatchIdx});
+      }
+    });
+  }
+  if(!ranges.length) return escHtml(pageText);
+  // Build breakpoints so no two spans overlap
+  const pts=new Set([0,pageText.length]);
+  ranges.forEach(r=>{if(r.s>0)pts.add(r.s);if(r.e<pageText.length)pts.add(r.e);});
+  const sorted=[...pts].sort((a,b)=>a-b);
+  let html='';
+  for(let i=0;i<sorted.length-1;i++){
+    const s=sorted[i],e=sorted[i+1]; if(s>=e) continue;
+    const seg=pageText.slice(s,e);
+    const cov=ranges.filter(r=>r.s<=s&&r.e>=e);
+    if(!cov.length){html+=escHtml(seg);continue;}
+    const best=cov.reduce((a,b)=>b.pri>a.pri?b:a);
+    if(best.pri>=2){
+      const style=best.cur
+        ?'background:rgba(251,191,36,0.95);outline:2px solid rgba(217,119,6,0.85);border-radius:3px;outline-offset:-1px;padding:0 .12em;line-height:1.3;box-decoration-break:clone;'
+        :'background:rgba(253,230,138,0.7);border-radius:3px;padding:0 .12em;line-height:1.3;box-decoration-break:clone;';
+      html+=`<mark style="${style}">${escHtml(seg)}</mark>`;
+    } else {
+      const na=best.note?` title="${escAttr(best.note)}"`:''
+      html+=`<mark style="background:${escAttr(best.color)};border-radius:2px;cursor:pointer;padding:0 .12em;line-height:1.3;box-decoration-break:clone;"${na} data-hlid="${best.hlid}">${escHtml(seg)}</mark>`;
+    }
+  }
+  return html;
+}
+
+function wireHighlightClicks(el){
+  el.querySelectorAll('mark[data-hlid]').forEach(mark => {
+    mark.addEventListener('click', e => {
+      e.stopPropagation();
+      const hl = highlights.find(h => h.id === Number(mark.dataset.hlid));
+      if(hl) showHlPopup(hl, mark.getBoundingClientRect());
+    });
+  });
+}
+
+/* ─── Bookmarks ─────────────────────────────────────────────────── */
+const bmarkKey = () => `bookmarks-${BOOK ? BOOK.id : 'x'}`;
+let bookmarks = [];
+
+function loadBookmarks(){
+  try{ bookmarks = JSON.parse(localStorage.getItem(bmarkKey())) || []; }catch{ bookmarks = []; }
+  if(!Array.isArray(bookmarks)) bookmarks = [];
+}
+function saveBookmarks(){
+  try{ localStorage.setItem(bmarkKey(), JSON.stringify(bookmarks)); }catch(e){}
+}
+
+function addBookmarkHere(){
+  // Remove any existing bookmark on the same page
+  bookmarks = bookmarks.filter(b => !(b.chapterIndex === chapterIndex && b.page === page));
+  const ch = BOOK.chapters[chapterIndex];
+  const label = (ch ? (ch.title || `Chapter ${chapterIndex+1}`) : `Chapter ${chapterIndex+1}`) + ` — p.${page+1}`;
+  bookmarks.unshift({ id: Date.now(), chapterIndex, page, label, savedAt: Date.now() });
+  saveBookmarks(); buildBmarkList();
+  // flash icon
+  const btn = $('bmarkBtn'); btn.classList.add('!text-amber-500');
+  setTimeout(() => btn.classList.remove('!text-amber-500'), 800);
+}
+
+function buildBmarkList(){
+  const list = $('bmarkList');
+  if(!bookmarks.length){
+    list.innerHTML='<p style="font-size:10px;color:#b0a090;text-align:center;padding:2.5rem 1.5rem;line-height:1.7">No bookmarks yet.<br><span style="font-size:9px;opacity:0.75">Press "Add Bookmark Here"<br>while reading.</span></p>';
+    return;
+  }
+  const bmDark=isDark();
+  const bmTextClr=bmDark?'#d4c4a8':'#3a2e1f';
+  const bmSubClr=bmDark?'#8a7060':'#a89070';
+  const bmAccent=bmDark?'#fbbf24':'#d97706';
+  list.innerHTML=bookmarks.map(bm=>{
+    const pts=bm.label.split(' — ');
+    const chTitle=escHtml(pts[0]||bm.label);
+    const pageInfo=escHtml(pts[1]||'');
+    const date=new Date(bm.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    const hoverBg=bmDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
+    const itemBg=bmDark?'rgba(255,255,255,0.06)':'rgba(255,255,255,0.88)';
+    const borderColor=bmDark?'rgba(255,255,255,0.08)':'rgba(210,190,160,0.32)';
+    return '<div class="bm-item" style="display:flex;align-items:flex-start;margin:6px 6px;border-radius:16px;cursor:pointer;transition:transform 0.18s,background 0.18s;overflow:hidden;background:'+itemBg+';border:1px solid '+borderColor+'" onmouseenter="this.style.background=\''+hoverBg+'\';this.style.transform=\'translateY(-1px)\';this.querySelector(\'.bm-del\').style.opacity=\'1\'" onmouseleave="this.style.background=\''+itemBg+'\';this.style.transform=\'translateY(0)\';this.querySelector(\'.bm-del\').style.opacity=\'0\'" data-bmid="'+bm.id+'">'
+      +'<div style="width:4px;background:'+bmAccent+';border-radius:4px 0 0 4px;flex-shrink:0"></div>'
+      +'<div style="flex:1;min-width:0;padding:9px 10px">'
+      +'<p style="font-size:9.5px;font-style:italic;color:'+bmTextClr+';line-height:1.4;word-break:break-word;margin:0">“'+chTitle+'”</p>'
+      +'<p style="font-size:8.5px;color:'+bmSubClr+';margin:4px 0 0;line-height:1.4">'+(pageInfo?pageInfo+' · ':'')+date+'</p>'
+      +'</div>'
+      +'<button class="bm-del" style="align-self:flex-start;margin:8px 8px 0 0;opacity:0;padding:4px;color:#c4b09a;border-radius:6px;line-height:0;transition:opacity 0.15s,color 0.1s;background:none;border:none;cursor:pointer;flex-shrink:0" onmouseenter="this.style.color=\'#ef4444\'" onmouseleave="this.style.color=\'#c4b09a\'" data-bmid="'+bm.id+'">'
+      +'<i data-lucide="x" class="w-3 h-3"></i></button>'
+      +'</div>';
+  }).join('');
+
+  list.querySelectorAll('.bm-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const bm = bookmarks.find(b => b.id === Number(el.dataset.bmid));
+      if(!bm) return;
+      closeBmarkDrawer();
+      if(bm.chapterIndex !== chapterIndex){
+        chapterIndex = bm.chapterIndex;
+        const targetPage = bm.page;
+        showView('reading');
+        requestAnimationFrame(() => {
+          const res = paginate(BOOK.chapters[chapterIndex].content || '');
+          repaginating = false;
+          if(res){ pages = res; page = Math.min(targetPage, pages.length - 1); renderReading(); saveProgress(); }
+        });
+      } else {
+        page = Math.min(bm.page, pages.length - 1);
+        renderReading(); saveProgress();
+      }
+    });
+  });
+
+  list.querySelectorAll('.bm-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      bookmarks = bookmarks.filter(b => b.id !== Number(btn.dataset.bmid));
+      saveBookmarks(); buildBmarkList();
+    });
+  });
+
+  if(window.lucide) lucide.createIcons({element: list});
+}
+
+function openBmarkDrawer(){ closeSearch(); closeHighlightsDrawer(); closeSettingsPanel(); $('bmarkWrap').classList.remove('hide'); buildBmarkList(); }
+function closeBmarkDrawer(){ $('bmarkWrap').classList.add('hide'); }
+
+/* ─── Chapter completion ────────────────────────────────────────── */
+const completedKey = () => `completed-${BOOK ? BOOK.id : 'x'}`;
+let completedChapters = new Set();
+
+function loadCompleted(){
+  try{ const a=JSON.parse(localStorage.getItem(completedKey()))||[]; completedChapters=new Set(Array.isArray(a)?a:[]); }catch{ completedChapters=new Set(); }
+}
+function saveCompleted(){
+  try{ localStorage.setItem(completedKey(),JSON.stringify([...completedChapters])); }catch(e){}
+}
+function checkChapterCompletion(){
+  if(!pages.length||view!=='reading') return;
+  const L=spreadStart(); const R=isMobile()?-1:(L+1<pages.length?L+1:-1);
+  if((R!==-1?R:L)>=pages.length-1 && !completedChapters.has(chapterIndex)){
+    completedChapters.add(chapterIndex); saveCompleted(); updateTocCheck(chapterIndex);
+  }
+}
+function updateTocCheck(ci){
+  const el=document.querySelector('#tocList .toc-item[data-toc="'+ci+'"] .toc-check');
+  if(el) el.classList.remove('hide');
+}
+
+/* ─── Search ────────────────────────────────────────────────────── */
+let searchQuery='', searchMatches=[], searchMatchIdx=-1, searchActive=false;
+
+function closeSettingsPanel(){ const panel=$('readerControlsPanel'); if(!panel.classList.contains('hidden')) panel.classList.add('hidden'); }
+function openSearch(){
+  closeHighlightsDrawer(); closeBmarkDrawer(); closeSettingsPanel();
+  searchActive=true; $('searchBar').classList.remove('hide');
+  if(window.lucide) lucide.createIcons({element:$('searchBar')});
+  setTimeout(()=>$('searchInput').focus(),40);
+}
+function closeSearch(){
+  searchActive=false; searchQuery=''; searchMatches=[]; searchMatchIdx=-1;
+  $('searchInput').value=''; $('searchCount').textContent='';
+  $('searchBar').classList.add('hide');
+  if(view==='reading') renderReading();
+}
+function clearSearchMatches(){
+  searchMatches=[]; searchMatchIdx=-1; updateSearchCount();
+}
+function runSearch(){
+  searchQuery=($('searchInput').value||'').trim();
+  searchMatches=[];
+  if(!searchQuery||!BOOK||view!=='reading'){ searchMatchIdx=-1; updateSearchCount(); if(view==='reading') renderReading(); return; }
+  const content=BOOK.chapters[chapterIndex].content||'';
+  const lower=content.toLowerCase(); const q=searchQuery.toLowerCase();
+  let pos=0;
+  while(pos<lower.length){ const idx=lower.indexOf(q,pos); if(idx===-1) break; searchMatches.push({start:idx,end:idx+q.length}); pos=idx+1; }
+  searchMatchIdx=searchMatches.length>0?0:-1;
+  if(searchMatchIdx>=0) navigateToSearchMatch(0); else { renderReading(); updateSearchCount(); }
+}
+function navigateToSearchMatch(idx){
+  if(!searchMatches.length) return;
+  idx=((idx%searchMatches.length)+searchMatches.length)%searchMatches.length;
+  searchMatchIdx=idx;
+  const m=searchMatches[idx];
+  const pi=pages.findIndex(p=>m.start>=p.start&&m.start<p.end);
+  if(pi!==-1){ page=isMobile()?pi:Math.floor(pi/2)*2; renderReading(); }
+  updateSearchCount();
+}
+function updateSearchCount(){
+  const el=$('searchCount');
+  if(!searchQuery){ el.textContent=''; return; }
+  if(!searchMatches.length){ el.textContent='No results'; el.style.color='#ef4444'; return; }
+  el.style.color='';
+  el.textContent=(searchMatchIdx+1)+' / '+searchMatches.length;
+}
+
+/* ─── Highlights & Notes Panel ──────────────────────────────────── */
+function hlDashColor(rgba){
+  if(rgba.includes('254,249,195')) return '#9a6f00';
+  if(rgba.includes('187,247,208')) return '#1a7a4a';
+  if(rgba.includes('191,219,254')) return '#1d5fa8';
+  if(rgba.includes('254,202,202')) return '#b83030';
+  return '#c47d2a';
+}
+function openHighlightsDrawer(){ closeSearch(); closeBmarkDrawer(); closeSettingsPanel(); $('hlNotesWrap').classList.remove('hide'); buildHighlightsList(); if(window.lucide) lucide.createIcons({element:$('hlNotesWrap')}); }
+function closeHighlightsDrawer(){ $('hlNotesWrap').classList.add('hide'); }
+function buildHighlightsList(){
+  const list=$('hlNotesList');
+  const dark=isDark();
+  if(!highlights.length){
+    list.innerHTML='<p style="font-size:10px;color:#b0a090;text-align:center;padding:2.5rem 1.5rem;line-height:1.7">No highlights yet.<br><span style="font-size:9px;opacity:0.75">Select any text while reading<br>to save it here.</span></p>';
+    return;
+  }
+  const byChapter={};
+  highlights.forEach(h=>{ if(!byChapter[h.chapterIndex]) byChapter[h.chapterIndex]=[]; byChapter[h.chapterIndex].push(h); });
+  let html='';
+  Object.keys(byChapter).sort((a,b)=>Number(a)-Number(b)).forEach(ci=>{
+    const ch=BOOK.chapters[Number(ci)];
+    const chName=ch?(ch.title||'Chapter '+(Number(ci)+1)):'Chapter '+(Number(ci)+1);
+    html+='<div style="padding:9px 14px 3px 14px;"><p style="font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#c47d2a;line-height:1.4">'+escHtml(chName)+'</p></div>';
+    byChapter[ci].sort((a,b)=>a.start-b.start).forEach(h=>{
+      const raw=h.text||(BOOK.chapters[Number(ci)]?.content||'').slice(h.start,h.end);
+      const excerpt=raw.length>90?raw.slice(0,90)+'…':raw;
+      const dc=hlDashColor(h.color);
+      const barColor=h.color||dc;
+      const textClr=dark?'#d4c4a8':'#3a2e1f';
+      const noteClr=dark?'#9a8060':'#6b5545';
+      const noteBg=dark?'rgba(255,255,255,0.05)':'rgba(180,150,100,0.09)';
+      const hoverBg=dark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)';
+      html+='<div class="hl-panel-item" style="display:flex;align-items:stretch;margin:8px 8px;border-radius:18px;cursor:pointer;transition:background 0.16s,transform 0.16s;overflow:hidden;background:'+(dark?'rgba(18,18,18,0.18)':'rgba(255,255,255,0.72)')+';border:1px solid '+(dark?'rgba(255,255,255,0.08)':'rgba(210,190,160,0.32)')+'" onmouseenter="this.style.background=\''+hoverBg+'\';this.style.transform=\'translateY(-1px)\';this.querySelector(\'.hl-panel-del\').style.opacity=\'1\'" onmouseleave="this.style.background=\''+(dark?'rgba(18,18,18,0.18)':'rgba(255,255,255,0.72)')+'\';this.style.transform=\'translateY(0)\';this.querySelector(\'.hl-panel-del\').style.opacity=\'0\'" data-hlid="'+h.id+'" data-ci="'+h.chapterIndex+'">'
+        +'<div style="width:4px;background:'+barColor+';border-radius:4px 0 0 4px;flex-shrink:0"></div>'
+        +'<div style="flex:1;min-width:0;padding:11px 12px">'
+        +'<p style="font-size:10px;font-style:italic;color:'+textClr+';line-height:1.5;word-break:break-word;margin:0">“'+escHtml(excerpt)+'”</p>'
+        +(h.note
+          ?'<div style="margin-top:8px;padding:8px 10px;background:'+noteBg+';border-radius:10px">'
+          +'<p style="font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.14em;color:'+barColor+';margin:0 0 4px;line-height:1">Notes</p>'
+          +'<p style="font-size:10px;color:'+noteClr+';line-height:1.5;word-break:break-word;margin:0;font-style:italic">“'+escHtml(h.note)+'”</p>'
+          +'</div>'
+          :'')
+        +'</div>'
+        +'<button class="hl-panel-del" style="align-self:flex-start;margin:8px 8px 0 0;opacity:0;padding:5px;color:#c4b09a;border-radius:6px;line-height:0;transition:opacity 0.15s,color 0.1s;background:none;border:none;cursor:pointer;flex-shrink:0" onmouseenter="this.style.color=\'#ef4444\'" onmouseleave="this.style.color=\'#c4b09a\'" data-hlid="'+h.id+'">'
+        +'<i data-lucide="x" class="w-3 h-3"></i></button>'
+        +'</div>';
+    });
+  });
+  list.innerHTML=html;
+  list.querySelectorAll('.hl-panel-item').forEach(el=>{
+    el.addEventListener('click',e=>{
+      if(e.target.closest('.hl-panel-del')) return;
+      const hl=highlights.find(h=>h.id===Number(el.dataset.hlid));
+      if(!hl) return;
+      closeHighlightsDrawer();
+      if(hl.chapterIndex!==chapterIndex){
+        chapterIndex=hl.chapterIndex;
+        const tgt=hl.start;
+        showView('reading');
+        requestAnimationFrame(()=>{
+          const res=paginate(BOOK.chapters[chapterIndex].content||'');
+          repaginating=false;
+          if(res){ pages=res; const pi=pages.findIndex(p=>tgt>=p.start&&tgt<p.end);
+            page=pi<0?0:(isMobile()?pi:Math.floor(pi/2)*2); renderReading(); saveProgress(); }
+        });
+      } else {
+        const pi=pages.findIndex(p=>hl.start>=p.start&&hl.start<p.end);
+        if(pi>=0){ page=isMobile()?pi:Math.floor(pi/2)*2; renderReading(); saveProgress(); }
+      }
+    });
+  });
+  list.querySelectorAll('.hl-panel-del').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      highlights=highlights.filter(h=>h.id!==Number(btn.dataset.hlid));
+      saveHighlights(); buildHighlightsList(); renderReading();
+    });
+  });
+  if(window.lucide) lucide.createIcons({element:list});
+}
+
+/* ─── Pagination engine ─────────────────────────────────────────── */
 function applySpreadLayout(){
   const mobile = isMobile();
   rightPage.style.display = mobile ? 'none' : 'flex';
   rightPage.style.visibility = 'visible';
 }
 
-/* ---------- pagination engine (approved) ---------- */
 function skipWS(t,i){ while(i<t.length && /\s/.test(t[i])) i++; return i; }
 function wordBoundary(t,start,target){
   if(target>=t.length) return t.length;
@@ -339,7 +879,7 @@ function repaginate(retry=0){
   });
 }
 
-/* ---------- views ---------- */
+/* ─── Views ─────────────────────────────────────────────────────── */
 function showView(v){
   view=v;
   coverView.classList.toggle('hide', v!=='cover'); coverView.classList.toggle('flex', v==='cover');
@@ -359,15 +899,23 @@ function setImgWithFallback(imgEl, fbEl, src){
   } else { imgEl.classList.add('hide'); fbEl.classList.remove('hide'); }
 }
 function showCover(){
+  clearSearchMatches();
   $('coverFallbackTitle').textContent = BOOK.title || '';
   setImgWithFallback($('coverImg'), $('coverFallback'), BOOK.cover);
   showView('cover'); progressBar.style.width='0%'; markToc();
 }
 function showIntro(ci){
   chapterIndex = Math.max(0, Math.min(ci, BOOK.chapters.length-1));
+  clearSearchMatches();
   const ch = BOOK.chapters[chapterIndex];
   $('introFallbackTitle').textContent = ch.title || '';
   setImgWithFallback($('introImg'), $('introFallback'), ch.introImage);
+
+  // Reading time estimate
+  const words = Math.round((ch.content || '').split(/\s+/).filter(Boolean).length);
+  const mins  = Math.max(1, Math.round(words / 200));
+  $('introHint').textContent = `~${mins} min read · Tap to begin →`;
+
   page=0; showView('intro'); markToc();
 }
 function openReadingAt(targetPage){
@@ -383,26 +931,34 @@ function openReadingAt(targetPage){
   });
 }
 
-/* ---------- reading render ---------- */
+/* ─── Reading render ────────────────────────────────────────────── */
 function spreadStart(){ return isMobile()?page:Math.floor(page/2)*2; }
 function renderReading(){
   applySpreadLayout();
   const L=spreadStart();
   const R=isMobile()?-1:(L+1<pages.length?L+1:-1);
-  leftBody.textContent = pages[L]?pages[L].text:'';
+
+  const ptL = pages[L]?.text || '';
+  leftBody.innerHTML = renderPageText(ptL, pages[L]?.start || 0);
+  wireHighlightClicks(leftBody);
   leftFolio.textContent = (L+1)+' / '+pages.length;
+
   if(R!==-1){
-    rightBody.textContent=pages[R].text; rightFolio.textContent=(R+1)+' / '+pages.length;
+    const ptR = pages[R]?.text || '';
+    rightBody.innerHTML = renderPageText(ptR, pages[R]?.start || 0);
+    wireHighlightClicks(rightBody);
+    rightFolio.textContent=(R+1)+' / '+pages.length;
     rightPage.style.visibility='visible';
   }else{
-    rightBody.textContent=''; rightFolio.textContent='';
+    rightBody.innerHTML=''; rightFolio.textContent='';
   }
   const lastShown=(R!==-1?R:L)+1;
   progressBar.style.width=Math.min(100,(lastShown/pages.length)*100)+'%';
+  checkChapterCompletion();
   updateTitle();
 }
 
-/* ---------- navigation ---------- */
+/* ─── Navigation ────────────────────────────────────────────────── */
 function next(){
   if(view==='cover'){ showIntro(0); return; }
   if(view==='intro'){ openReadingAt(0); return; }
@@ -429,7 +985,7 @@ function prev(){
   }
 }
 
-/* ---------- TOC ---------- */
+/* ─── TOC ───────────────────────────────────────────────────────── */
 function buildToc(){
   const list=$('tocList');
   let html = '<div data-toc="cover" class="toc-item flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 mb-1 rounded-lg cursor-pointer">'
@@ -439,7 +995,9 @@ function buildToc(){
   html += BOOK.chapters.map((ch,i)=>
     '<div data-toc="'+i+'" class="toc-item flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 mb-1 rounded-lg cursor-pointer">'
     + '<span class="w-4 text-[10px] font-medium text-gray-400 dark:text-gray-500 sm:w-5 sm:text-xs">'+(i+1)+'</span>'
-    + '<span class="flex-1 text-[11px] truncate sm:text-sm">'+(ch.title || ('Chapter '+(i+1)))+'</span></div>'
+    + '<span class="flex-1 text-[11px] truncate sm:text-sm">'+(ch.title || ('Chapter '+(i+1)))+'</span>'
+    + '<i data-lucide="check-circle-2" class="toc-check w-3.5 h-3.5 text-emerald-500 flex-shrink-0'+(completedChapters.has(i)?'':' hide')+'"></i>'
+    + '</div>'
   ).join('');
   list.innerHTML=html;
   list.querySelectorAll('.toc-item').forEach(el=>{
@@ -461,7 +1019,7 @@ function markToc(){
 function openToc(){ $('tocWrap').classList.remove('hide'); }
 function closeToc(){ $('tocWrap').classList.add('hide'); }
 
-/* ---------- settings ---------- */
+/* ─── Settings ──────────────────────────────────────────────────── */
 function applyTypography(){
   reader.style.setProperty('--rfs', fontSize+'px');
   reader.style.setProperty('--rlh', lineHeight);
@@ -504,9 +1062,10 @@ function loadSettings(){
   }catch(e){}
 }
 
-/* ---------- progress ---------- */
+/* ─── Progress ──────────────────────────────────────────────────── */
 function saveProgress(){
   if(!BOOK || view!=='reading' || !pages.length) return;
+  logReadingActivity();
   try{
     const L=spreadStart(); const R=isMobile()?-1:(L+1<pages.length?L+1:-1);
     const entry={ bookId:BOOK.id, chapter:chapterIndex, position:pages[page]?pages[page].start:0,
@@ -520,23 +1079,97 @@ function loadSaved(){
   try{ const a=JSON.parse(localStorage.getItem('reading-progress'))||[]; return Array.isArray(a)?a.find(p=>String(p.bookId)===String(BOOK.id)):null; }catch(e){ return null; }
 }
 
-/* ---------- wiring ---------- */
+/* ─── Tap / swipe / keyboard ────────────────────────────────────── */
+function hasTextSelection(){
+  const sel = window.getSelection();
+  return sel && !sel.isCollapsed && sel.toString().trim().length > 0;
+}
+function anyPanelOpen(){
+  return !$('bmarkWrap').classList.contains('hide') || !$('hlNotesWrap').classList.contains('hide');
+}
 function tapHandler(el){
-  el.addEventListener('click',(e)=>{ const r=el.getBoundingClientRect(); ((e.clientX-r.left)<r.width/2)?prev():next(); });
+  el.addEventListener('click',(e)=>{
+    if(e.target.closest('mark[data-hlid]')) return;
+    if(hasTextSelection()) return;
+    if(anyPanelOpen()) return; // let document click handler close the panel
+    const r=el.getBoundingClientRect(); ((e.clientX-r.left)<r.width/2)?prev():next();
+  });
   let tx=0;
   el.addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
-  el.addEventListener('touchend',e=>{ const d=tx-e.changedTouches[0].clientX; if(d>50) next(); else if(d<-50) prev(); });
+  el.addEventListener('touchend',e=>{
+    if(hasTextSelection()) return;
+    if(anyPanelOpen()) return; // swipe outside panel just dismisses it
+    const d=tx-e.changedTouches[0].clientX; if(d>50) next(); else if(d<-50) prev();
+  });
 }
 [coverView,introView,spread].forEach(tapHandler);
-document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight') next(); if(e.key==='ArrowLeft') prev(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight' && !searchActive) next();
+  if(e.key==='ArrowLeft' && !searchActive) prev();
+  if((e.ctrlKey||e.metaKey) && e.key==='f'){ e.preventDefault(); openSearch(); }
+  if(e.key==='Escape'){ closeToc(); closeBmarkDrawer(); closeHighlightsDrawer(); closeSearch(); hideHlToolbar(); $('hlPopup').classList.add('hide'); $('noteModal').classList.add('hide'); }
+});
 
+/* ─── Text selection for highlights ────────────────────────────── */
+spread.addEventListener('mouseup', handleTextSelection);
+spread.addEventListener('touchend', () => setTimeout(handleTextSelection, 80));
+
+/* ─── Button wiring ─────────────────────────────────────────────── */
 $('backBtn').addEventListener('click',()=>{ if(document.referrer && new URL(document.referrer).origin===location.origin) history.back(); else location.href='/'; });
 $('tocBtn').addEventListener('click',openToc);
 $('tocClose').addEventListener('click',closeToc);
 $('tocOverlay').addEventListener('click',closeToc);
-$('settingsBtn').addEventListener('click',(e)=>{ e.stopPropagation(); const panel=$('readerControlsPanel'); panel.classList.toggle('hidden'); if(!panel.classList.contains('hidden') && window.lucide) lucide.createIcons(); });
-document.addEventListener('click',()=>{ const panel=$('readerControlsPanel'); if(!panel.classList.contains('hidden')) panel.classList.add('hidden'); });
+
+$('bmarkBtn').addEventListener('click', e=>{ e.stopPropagation(); $('bmarkWrap').classList.contains('hide')?openBmarkDrawer():closeBmarkDrawer(); });
+$('bmarkClose').addEventListener('click',closeBmarkDrawer);
+$('bmarkOverlay').addEventListener('click', () => closeBmarkDrawer());
+$('addBmarkBtn').addEventListener('click',() => { if(view==='reading') addBookmarkHere(); });
+
+$('hlNotesBtn').addEventListener('click', e=>{ e.stopPropagation(); $('hlNotesWrap').classList.contains('hide')?openHighlightsDrawer():closeHighlightsDrawer(); });
+$('hlNotesClose').addEventListener('click', closeHighlightsDrawer);
+
+$('searchBtn').addEventListener('click', e=>{ e.stopPropagation(); $('searchBar').classList.contains('hide')?openSearch():closeSearch(); });
+$('searchClose').addEventListener('click', closeSearch);
+$('searchInput').addEventListener('input', runSearch);
+$('searchInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ e.preventDefault(); e.shiftKey?navigateToSearchMatch(searchMatchIdx-1):navigateToSearchMatch(searchMatchIdx+1); }
+});
+$('searchPrev').addEventListener('click', ()=>navigateToSearchMatch(searchMatchIdx-1));
+$('searchNext').addEventListener('click', ()=>navigateToSearchMatch(searchMatchIdx+1));
+
+$('settingsBtn').addEventListener('click',(e)=>{ e.stopPropagation(); const panel=$('readerControlsPanel'); const opening=panel.classList.contains('hidden'); closeSearch(); closeHighlightsDrawer(); closeBmarkDrawer(); if(opening){ panel.classList.remove('hidden'); if(window.lucide) lucide.createIcons(); } else panel.classList.add('hidden'); });
+document.addEventListener('click', e=>{
+  const panel=$('readerControlsPanel'); if(!panel.classList.contains('hidden')) panel.classList.add('hidden');
+  if(!$('searchBar').classList.contains('hide') && !$('searchBar').contains(e.target) && !$('searchBtn').contains(e.target)) closeSearch();
+  if(!$('hlNotesWrap').classList.contains('hide') && !$('hlNotesWrap').contains(e.target) && !$('hlNotesBtn').contains(e.target)) closeHighlightsDrawer();
+  if(!$('bmarkWrap').classList.contains('hide') && !$('bmarkWrap').contains(e.target) && !$('bmarkBtn').contains(e.target)) closeBmarkDrawer();
+});
 $('readerControls').addEventListener('click',e=>e.stopPropagation());
+
+// Highlight toolbar buttons
+document.querySelectorAll('.hlColorBtn').forEach(btn => {
+  btn.addEventListener('click', () => saveHighlight(btn.dataset.hlcolor, ''));
+});
+$('hlNoteBtn').addEventListener('click', () => {
+  if(!selState) return;
+  pendingHlColor = 'rgba(254,249,195,0.92)'; // default yellow
+  $('noteSelText').textContent = `"${selState.text.slice(0, 120)}${selState.text.length > 120 ? '…' : ''}"`;
+  $('noteInput').value = '';
+  $('noteModal').classList.remove('hide');
+  setTimeout(() => $('noteInput').focus(), 50);
+});
+$('hlCancelBtn').addEventListener('click', () => { hideHlToolbar(); window.getSelection()?.removeAllRanges(); });
+
+// Note modal
+$('noteSaveBtn').addEventListener('click', () => {
+  const note = $('noteInput').value.trim();
+  saveHighlight(pendingHlColor || 'rgba(254,249,195,0.92)', note);
+  $('noteModal').classList.add('hide');
+});
+$('noteCancelBtn').addEventListener('click', () => {
+  $('noteModal').classList.add('hide');
+  hideHlToolbar();
+});
 
 function changeFont(){ applyTypography(); saveSettings(); repaginate(); }
 $('fsRange').addEventListener('input',e=>{ fontSize=parseInt(e.target.value); changeFont(); });
@@ -555,7 +1188,7 @@ ro.observe(leftBody);
 window.addEventListener('orientationchange',()=>{ if(view==='reading') repaginate(); });
 if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>{ if(view==='reading') repaginate(); }); }
 
-/* ---------- boot ---------- */
+/* ─── Boot ──────────────────────────────────────────────────────── */
 try{ if(localStorage.getItem('reader-dark-mode')==='true') document.documentElement.classList.add('dark'); }catch(e){}
 reader.style.backgroundColor = isDark() ? '#141414' : '#f4efe6';
 
@@ -569,13 +1202,16 @@ function fatal(html){ reader.innerHTML='<div class="flex flex-col items-center j
 (async function init(){
   const id=new URLSearchParams(location.search).get('id');
   const books=await fetchBooks();
-  if(!books){ fatal('<p>Couldn\u2019t load <b>books.json</b>. Place a copy at <code>public/books.json</code>.</p><p><a class="text-amber-600" href="/">\u2190 Back to library</a></p>'); return; }
+  if(!books){ fatal('<p>Couldn’t load <b>books.json</b>. Place a copy at <code>public/books.json</code>.</p><p><a class="text-amber-600" href="/">← Back to library</a></p>'); return; }
   BOOK = books.find(b=>String(b.id)===String(id)) || books[0];
-  if(!BOOK || !Array.isArray(BOOK.chapters) || !BOOK.chapters.length){ fatal('<p>Book not found.</p><p><a class="text-amber-600" href="/">\u2190 Back to library</a></p>'); return; }
+  if(!BOOK || !Array.isArray(BOOK.chapters) || !BOOK.chapters.length){ fatal('<p>Book not found.</p><p><a class="text-amber-600" href="/">← Back to library</a></p>'); return; }
 
   document.title = BOOK.title || 'Reader';
   loadSettings();
   applyTypography();
+  loadHighlights();
+  loadBookmarks();
+  loadCompleted();
   buildToc();
   if(window.lucide) lucide.createIcons();
 

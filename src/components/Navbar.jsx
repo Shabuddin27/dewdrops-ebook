@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion as framerMotion } from "framer-motion";
-import { Menu, X, Home, Info, Mail, Moon, Sun } from "lucide-react";
+import { Menu, X, Home, Info, Mail, Moon, Sun, BarChart2 } from "lucide-react";
 
 const MotionDiv = framerMotion.div;
 
@@ -39,6 +39,7 @@ export default function Navbar() {
 
   const navLinks = [
     { path: "/", label: "Home", icon: Home },
+    { path: "/stats", label: "Stats", icon: BarChart2 },
     { path: "/about", label: "About", icon: Info },
     { path: "/contact", label: "Contact", icon: Mail },
   ];
@@ -119,10 +120,10 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            <button onClick={toggleDarkMode} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800">
+            <button onClick={toggleDarkMode} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800 text-gray-600 dark:text-gray-300">
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800 text-gray-600 dark:text-gray-300">
               {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
