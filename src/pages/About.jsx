@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { motion as framerMotion } from "framer-motion";
 import { BookOpen, Feather, Globe, Sparkles } from "lucide-react";
+
+const MotionDiv = framerMotion.div;
 
 const pillars = [
   {
@@ -19,6 +23,8 @@ const pillars = [
 ];
 
 export default function About() {
+  const [isFlipped, setIsFlipped] = useState(false);
+
   return (
     <div className="max-w-5xl px-4 py-10 mx-auto sm:px-6 lg:px-8 sm:py-14 lg:py-18">
 
@@ -39,13 +45,46 @@ export default function About() {
         </p>
       </div>
 
-      {/* AUTHOR CARD */}
+      {/* AUTHOR CARD — circle flip on click */}
       <div className="flex flex-col items-center mb-14">
         <div
-          className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center shadow-lg ring-4 ring-amber-100 dark:ring-amber-900/40 mb-4 select-none"
-          style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 55%, #92400E 100%)" }}
+          className="cursor-pointer mb-4 select-none"
+          style={{ perspective: "600px", width: 112, height: 112 }}
+          onClick={() => setIsFlipped((f) => !f)}
         >
-          <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">SG</span>
+          <MotionDiv
+            animate={{ rotateY: isFlipped ? 180 : 0 }}
+            transition={{ duration: 0.55, ease: "easeInOut" }}
+            style={{ transformStyle: "preserve-3d", width: "100%", height: "100%", position: "relative" }}
+          >
+            {/* FRONT — SG initials */}
+            <div
+              className="absolute inset-0 rounded-full flex items-center justify-center shadow-lg ring-4 ring-amber-100 dark:ring-amber-900/40"
+              style={{ backfaceVisibility: "hidden", background: "linear-gradient(135deg, #FBBF24 0%, #D97706 55%, #92400E 100%)" }}
+            >
+              <span className="text-3xl font-extrabold text-white tracking-tight">SG</span>
+            </div>
+
+            {/* BACK — PowerPuff wiggle */}
+            <div
+              className="absolute inset-0 rounded-full shadow-lg ring-4 ring-pink-300 dark:ring-pink-900/50 overflow-hidden"
+              style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "#EE6FA0" }}
+            >
+              <MotionDiv
+                className="w-full h-full"
+                animate={{ y: [0, -8, 0], rotate: [-3, 3, -3] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <img
+                  src="/covers/power.png"
+                  alt="PowerPuff"
+                  draggable={false}
+                  className="w-full h-full"
+                  style={{ objectFit: "cover", objectPosition: "50% 30%", transformOrigin: "50% 50%" }}
+                />
+              </MotionDiv>
+            </div>
+          </MotionDiv>
         </div>
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1">Suzanne Gurung</h2>
         <p className="text-sm text-amber-600 dark:text-amber-500 font-medium tracking-wide">Author &amp; Storyteller</p>

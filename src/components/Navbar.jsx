@@ -120,31 +120,33 @@ export default function Navbar() {
               </div>
             </Link>
 
-          <div className="hidden md:flex md:items-center md:gap-8">
+          <div className="hidden md:flex md:items-center md:gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`relative px-1 py-1 text-sm font-medium transition-colors ${
+                className={`relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
                   isActive(link.path)
-                    ? "text-amber-700 dark:text-amber-400"
-                    : "text-gray-600 hover:text-amber-700 dark:text-gray-300 dark:hover:text-amber-400"
+                    ? "text-white shadow-md shadow-amber-200/60 dark:shadow-amber-900/40"
+                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-white/5"
                 }`}
               >
-                {link.label}
                 {isActive(link.path) && (
                   <MotionDiv
                     layoutId="navbar-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500 to-amber-700 rounded-full"
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: "linear-gradient(135deg, #FBBF24 0%, #F97316 50%, #FB7185 100%)" }}
                   />
                 )}
+                <link.icon size={13} className="relative z-10 flex-shrink-0" />
+                <span className="relative z-10">{link.label}</span>
               </Link>
             ))}
             <button
               onClick={toggleDarkMode}
-              className="p-2 text-gray-600 transition-colors bg-gray-100 rounded-lg dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="ml-2 p-2 text-gray-500 transition-all rounded-full dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:scale-110"
             >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
           </div>
 
@@ -165,7 +167,8 @@ export default function Navbar() {
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg ${isActive(link.path) ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "text-gray-600 dark:text-gray-300"}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-all ${isActive(link.path) ? "text-white shadow-sm shadow-amber-200/50" : "text-gray-600 dark:text-gray-300"}`}
+                style={isActive(link.path) ? { background: "linear-gradient(135deg, #FBBF24 0%, #F97316 50%, #FB7185 100%)" } : {}}
               >
                 <link.icon size={18} />
                 <span className="text-sm font-medium">{link.label}</span>

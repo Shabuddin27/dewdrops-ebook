@@ -237,7 +237,7 @@ function Home() {
               onClick={() => setSortOpen(!sortOpen)}
               className="flex items-center gap-1 px-2.5 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
             >
-              <span className="hidden xs:inline dark:text-white">Sort</span>
+              <span className="hidden sm:inline dark:text-white">Sort</span>
               <span className="dark:text-white">{sortOptions.find(s => s.value === sort)?.label}</span>
               <ChevronDown size={12} className={`transition-transform sm:size-[14px] ${sortOpen ? "rotate-180" : ""}`} />
             </button>
@@ -373,7 +373,7 @@ function Home() {
 
         {/* Grid view */}
         {viewMode === "grid" ? (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-5 xs:grid-cols-3 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {filtered.map((book, index) => (
               <MotionDiv
                 key={book.id}
