@@ -14,13 +14,20 @@ export default function Navbar() {
 
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("reader-dark-mode");
-    const dark = savedDarkMode === "true";
+    if (savedDarkMode === null) localStorage.setItem("reader-dark-mode", "false");
+    document.documentElement.classList.toggle("dark", savedDarkMode === "true");
 
-    if (savedDarkMode === null) {
-      localStorage.setItem("reader-dark-mode", "false");
-    }
-
-    document.documentElement.classList.toggle("dark", dark);
+    const sync = () => {
+      const dark = localStorage.getItem("reader-dark-mode") === "true";
+      setIsDarkMode(dark);
+      document.documentElement.classList.toggle("dark", dark);
+    };
+    window.addEventListener("pageshow", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("pageshow", sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   useEffect(() => {

@@ -41,19 +41,21 @@ function AnimatedRoutes() {
 }
 
 function App() {
-  // Dark mode setup
+  // Dark mode setup — also re-syncs on bfcache restore (back from reader) and cross-tab changes
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem("reader-dark-mode");
-
-    if (savedDarkMode === "true") {
-      document.documentElement.classList.add("dark");
-    } else if (savedDarkMode === "false") {
-      document.documentElement.classList.remove("dark");
-    } else {
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.classList.add("dark");
-      }
-    }
+    const apply = () => {
+      const dark = localStorage.getItem("reader-dark-mode");
+      if (dark === "true") document.documentElement.classList.add("dark");
+      else if (dark === "false") document.documentElement.classList.remove("dark");
+      else if (window.matchMedia("(prefers-color-scheme: dark)").matches) document.documentElement.classList.add("dark");
+    };
+    apply();
+    window.addEventListener("pageshow", apply);
+    window.addEventListener("storage", apply);
+    return () => {
+      window.removeEventListener("pageshow", apply);
+      window.removeEventListener("storage", apply);
+    };
   }, []);
 
   return (
