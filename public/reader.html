@@ -601,13 +601,22 @@ function saveBookmarks(){
 }
 
 function addBookmarkHere(){
-  // Remove any existing bookmark on the same page
-  bookmarks = bookmarks.filter(b => !(b.chapterIndex === chapterIndex && b.page === page));
-  const ch = BOOK.chapters[chapterIndex];
-  const label = (ch ? (ch.title || `Chapter ${chapterIndex+1}`) : `Chapter ${chapterIndex+1}`) + ` — p.${page+1}`;
-  bookmarks.unshift({ id: Date.now(), chapterIndex, page, label, savedAt: Date.now() });
+  let bmChapter, bmPage, bmType, label;
+  if(view === 'cover'){
+    bmChapter = -1; bmPage = 0; bmType = 'cover';
+    label = 'Cover';
+  } else if(view === 'intro'){
+    bmChapter = chapterIndex; bmPage = 0; bmType = 'intro';
+    const ch = BOOK.chapters[chapterIndex];
+    label = (ch ? (ch.title || `Chapter ${chapterIndex+1}`) : `Chapter ${chapterIndex+1}`) + ' — Intro';
+  } else {
+    bmChapter = chapterIndex; bmPage = page; bmType = 'reading';
+    const ch = BOOK.chapters[chapterIndex];
+    label = (ch ? (ch.title || `Chapter ${chapterIndex+1}`) : `Chapter ${chapterIndex+1}`) + ` — p.${page+1}`;
+  }
+  bookmarks = bookmarks.filter(b => !(b.chapterIndex === bmChapter && b.page === bmPage && b.type === bmType));
+  bookmarks.unshift({ id: Date.now(), chapterIndex: bmChapter, page: bmPage, type: bmType, label, savedAt: Date.now() });
   saveBookmarks(); buildBmarkList();
-  // flash icon
   const btn = $('bmarkBtn'); btn.classList.add('!text-amber-500');
   setTimeout(() => btn.classList.remove('!text-amber-500'), 800);
 }
@@ -646,18 +655,24 @@ function buildBmarkList(){
       const bm = bookmarks.find(b => b.id === Number(el.dataset.bmid));
       if(!bm) return;
       closeBmarkDrawer();
-      if(bm.chapterIndex !== chapterIndex){
-        chapterIndex = bm.chapterIndex;
-        const targetPage = bm.page;
-        showView('reading');
-        requestAnimationFrame(() => {
-          const res = paginate(BOOK.chapters[chapterIndex].content || '');
-          repaginating = false;
-          if(res){ pages = res; page = Math.min(targetPage, pages.length - 1); renderReading(); saveProgress(); }
-        });
+      if(bm.type === 'cover'){
+        showCover();
+      } else if(bm.type === 'intro'){
+        showIntro(bm.chapterIndex);
       } else {
-        page = Math.min(bm.page, pages.length - 1);
-        renderReading(); saveProgress();
+        if(bm.chapterIndex !== chapterIndex || view !== 'reading'){
+          chapterIndex = bm.chapterIndex;
+          const targetPage = bm.page;
+          showView('reading');
+          requestAnimationFrame(() => {
+            const res = paginate(BOOK.chapters[chapterIndex].content || '');
+            repaginating = false;
+            if(res){ pages = res; page = Math.min(targetPage, pages.length - 1); renderReading(); saveProgress(); }
+          });
+        } else {
+          page = Math.min(bm.page, pages.length - 1);
+          renderReading(); saveProgress();
+        }
       }
     });
   });
@@ -1142,7 +1157,7 @@ $('tocClose').addEventListener('click',closeToc);
 $('bmarkBtn').addEventListener('click', e=>{ e.stopPropagation(); $('bmarkWrap').classList.contains('hide')?openBmarkDrawer():closeBmarkDrawer(); });
 $('bmarkClose').addEventListener('click',closeBmarkDrawer);
 $('bmarkOverlay').addEventListener('click', () => closeBmarkDrawer());
-$('addBmarkBtn').addEventListener('click',() => { if(view==='reading') addBookmarkHere(); });
+$('addBmarkBtn').addEventListener('click', addBookmarkHere);
 
 $('hlNotesBtn').addEventListener('click', e=>{ e.stopPropagation(); $('hlNotesWrap').classList.contains('hide')?openHighlightsDrawer():closeHighlightsDrawer(); });
 $('hlNotesClose').addEventListener('click', closeHighlightsDrawer);
