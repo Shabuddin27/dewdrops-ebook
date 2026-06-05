@@ -7,6 +7,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Stats from "./pages/Stats";
 import Navbar from "./components/Navbar";
+import FloatingInstagram from "./components/FloatingInstagram";
 
 const MotionDiv = framerMotion.div;
 
@@ -56,11 +57,12 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fdfaf4] to-[#ede7da] dark:from-[#17150f] dark:to-[#0e0c08] text-gray-900 dark:text-gray-100 transition-colors duration-500 select-none">
+    <div className="min-h-screen bg-gradient-to-br from-[#fdfaf4] to-[#ede7da] dark:from-[#17150f] dark:to-[#0e0c08] text-gray-900 dark:text-gray-100 transition-colors duration-500 select-none flex flex-col">
       <Navbar />
-      <div className="pt-16 md:pt-20 lg:pt-24">
+      <div className="pt-16 md:pt-20 lg:pt-24 flex-1">
         <AnimatedRoutes />
       </div>
+      <FloatingInstagram />
     </div>
   );
 }

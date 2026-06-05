@@ -39,6 +39,18 @@ export default function About() {
         </p>
       </div>
 
+      {/* AUTHOR CARD */}
+      <div className="flex flex-col items-center mb-14">
+        <div
+          className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center shadow-lg ring-4 ring-amber-100 dark:ring-amber-900/40 mb-4 select-none"
+          style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 55%, #92400E 100%)" }}
+        >
+          <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">SG</span>
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1">Suzanne Gurung</h2>
+        <p className="text-sm text-amber-600 dark:text-amber-500 font-medium tracking-wide">Author &amp; Storyteller</p>
+      </div>
+
       {/* MISSION + QUOTE */}
       <div className="grid items-center gap-10 mb-14 md:grid-cols-2">
         <div>
