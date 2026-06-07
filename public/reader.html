@@ -297,10 +297,10 @@
 
   <!-- ============ HIGHLIGHT TOOLBAR ============ -->
   <div id="hlToolbar" class="hide fixed z-[200] flex items-center gap-1 px-2 py-1.5 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700">
-    <button data-hlcolor="rgba(254,249,195,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-yellow-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Yellow"></button>
-    <button data-hlcolor="rgba(187,247,208,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-green-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Green"></button>
-    <button data-hlcolor="rgba(191,219,254,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-blue-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Blue"></button>
-    <button data-hlcolor="rgba(254,202,202,0.92)" class="hlColorBtn w-5 h-5 rounded-full bg-red-200 border-2 border-transparent hover:border-gray-400 transition-all" title="Pink"></button>
+    <button data-hlcolor="rgba(207,163,72,0.88)" class="hlColorBtn w-5 h-5 rounded-full bg-[#cfa348] border-2 border-transparent hover:border-gray-400 transition-all" title="Warm Amber"></button>
+    <button data-hlcolor="rgba(152,183,121,0.88)" class="hlColorBtn w-5 h-5 rounded-full bg-[#98b979] border-2 border-transparent hover:border-gray-400 transition-all" title="Sage Olive"></button>
+    <button data-hlcolor="rgba(112,145,187,0.88)" class="hlColorBtn w-5 h-5 rounded-full bg-[#7091bb] border-2 border-transparent hover:border-gray-400 transition-all" title="Slate Blue"></button>
+    <button data-hlcolor="rgba(192,121,111,0.88)" class="hlColorBtn w-5 h-5 rounded-full bg-[#c0796f] border-2 border-transparent hover:border-gray-400 transition-all" title="Dusty Rose"></button>
     <div class="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-0.5"></div>
     <button id="hlNoteBtn" class="flex items-center gap-1 px-1.5 py-1 text-[10px] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap">
       <i data-lucide="pencil-line" class="w-3 h-3"></i><span>Note</span>
@@ -441,7 +441,7 @@ function logReadingActivity(){
     const raw = JSON.parse(localStorage.getItem('reading-log')) || {};
     raw[today] = (raw[today] || 0) + 1;
     localStorage.setItem('reading-log', JSON.stringify(raw));
-  }catch(e){}
+  }catch{}
 }
 
 /* ─── Highlights ────────────────────────────────────────────────── */
@@ -499,8 +499,6 @@ function handleTextSelection(){
   const endInPage   = getAbsoluteOffset(pageBody, range.endContainer,   range.endOffset);
   if(startInPage >= endInPage){ hideHlToolbar(); return; }
 
-
-
   const txt = sel.toString().trim();
   if(!txt){ hideHlToolbar(); return; }
 
@@ -515,19 +513,23 @@ function showHlToolbar(rect){
   const tb = $('hlToolbar');
   if(!_hlToolbarReady && window.lucide){ lucide.createIcons({element: tb}); _hlToolbarReady = true; }
   tb.classList.remove('hide');
+  tb.style.transform = '';
+  tb.style.bottom = '';
+  const tbW = tb.offsetWidth || 200;
+  const tbH = tb.offsetHeight || 36;
+  let x = rect.left + rect.width / 2 - tbW / 2;
+  x = Math.max(8, Math.min(x, window.innerWidth - tbW - 8));
+  let y;
   if('ontouchstart' in window){
-    tb.style.top = ''; tb.style.transform = 'translateX(-50%)';
-    tb.style.left = '50%'; tb.style.bottom = '24px';
+    const navRect = $('topNav')?.getBoundingClientRect();
+    y = navRect ? navRect.bottom + 10 : 80;
+    if(y + tbH > window.innerHeight - 8) y = Math.max(8, window.innerHeight - tbH - 8);
+    x = Math.max(8, Math.min(window.innerWidth / 2 - tbW / 2, window.innerWidth - tbW - 8));
   } else {
-    tb.style.transform = ''; tb.style.bottom = '';
-    const tbW = tb.offsetWidth || 200;
-    const tbH = tb.offsetHeight || 36;
-    let x = rect.left + rect.width / 2 - tbW / 2;
-    let y = rect.top - tbH - 8;
+    y = rect.top - tbH - 8;
     if(y < 8) y = rect.bottom + 8;
-    x = Math.max(8, Math.min(x, window.innerWidth - tbW - 8));
-    tb.style.left = x + 'px'; tb.style.top = y + 'px';
   }
+  tb.style.left = x + 'px'; tb.style.top = y + 'px';
 }
 
 function hideHlToolbar(){ $('hlToolbar').classList.add('hide'); hideDictCard(); selState = null; }
@@ -808,7 +810,9 @@ let searchQuery='', searchMatches=[], searchMatchIdx=-1, searchActive=false;
 function closeSettingsPanel(){ const panel=$('readerControlsPanel'); if(!panel.classList.contains('hidden')) panel.classList.add('hidden'); }
 function openSearch(){
   closeHighlightsDrawer(); closeBmarkDrawer(); closeSettingsPanel();
-  searchActive=true; $('searchBar').classList.remove('hide');
+  searchActive=true;
+  $('searchInput').value=''; $('searchCount').textContent='';
+  $('searchBar').classList.remove('hide');
   if(window.lucide) lucide.createIcons({element:$('searchBar')});
   setTimeout(()=>$('searchInput').focus(),40);
 }
@@ -851,10 +855,10 @@ function updateSearchCount(){
 
 /* ─── Highlights & Notes Panel ──────────────────────────────────── */
 function hlDashColor(rgba){
-  if(rgba.includes('254,249,195')) return '#9a6f00';
-  if(rgba.includes('187,247,208')) return '#1a7a4a';
-  if(rgba.includes('191,219,254')) return '#1d5fa8';
-  if(rgba.includes('254,202,202')) return '#b83030';
+  if(rgba.includes('255,241,143')) return '#9d7a11';
+  if(rgba.includes('190,233,181')) return '#2c7a3c';
+  if(rgba.includes('179,217,255')) return '#2362a8';
+  if(rgba.includes('255,209,210')) return '#b33d47';
   return '#c47d2a';
 }
 function openHighlightsDrawer(){ closeSearch(); closeBmarkDrawer(); closeToc(); closeSettingsPanel(); $('hlNotesWrap').classList.remove('hide'); buildHighlightsList(); if(window.lucide) lucide.createIcons({element:$('hlNotesWrap')}); }
@@ -1235,6 +1239,12 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ─── Text selection for highlights ────────────────────────────── */
+// Close search the instant the user touches/clicks the reading area.
+// This makes keyboard dismissal and any DOM changes happen BEFORE the
+// browser anchors a selection to the DOM, not during it.
+spread.addEventListener('mousedown', () => { if(searchActive) closeSearch(false); });
+spread.addEventListener('touchstart', () => { if(searchActive) closeSearch(false); }, { passive: true });
+
 spread.addEventListener('mouseup', handleTextSelection);
 if('ontouchstart' in window){
   let _mobSelTimer = null;
@@ -1281,8 +1291,14 @@ $('settingsBtn').addEventListener('click',(e)=>{ e.stopPropagation(); const pane
 document.addEventListener('click', e=>{
   const panel=$('readerControlsPanel'); if(!panel.classList.contains('hidden')) panel.classList.add('hidden');
   if(!$('searchBar').classList.contains('hide') && !$('searchBar').contains(e.target) && !$('searchBtn').contains(e.target)){
-    if(hasTextSelection()) closeSearch(false);
-    else closeSearch();
+    // Always close without re-render — re-rendering here destroys the DOM while
+    // the browser (especially iOS) is still anchoring a long-press selection to it.
+    // If the user wasn't selecting anything, we re-render 700 ms later (after the
+    // 400 ms selectionchange debounce would have fired) to clear stale highlights.
+    closeSearch(false);
+    setTimeout(() => {
+      if(!selState && $('hlToolbar').classList.contains('hide') && view==='reading' && !searchActive) renderReading();
+    }, 700);
   }
   if(!$('hlNotesWrap').classList.contains('hide') && !$('hlNotesWrap').contains(e.target) && !$('hlNotesBtn').contains(e.target)) closeHighlightsDrawer();
   if(!$('bmarkWrap').classList.contains('hide') && !$('bmarkWrap').contains(e.target) && !$('bmarkBtn').contains(e.target)) closeBmarkDrawer();

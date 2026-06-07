@@ -145,12 +145,38 @@ export default function Navbar() {
             >
               {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
+            <a
+              href="https://www.instagram.com/dewdrop_stories"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Follow on Instagram"
+              className="p-2 text-gray-500 transition-all rounded-full dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:scale-110 hover:text-pink-500 dark:hover:text-pink-400"
+            >
+              <svg viewBox="0 0 24 24" className="w-[17px] h-[17px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <circle cx="12" cy="12" r="4.5" />
+                <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none" />
+              </svg>
+            </a>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
             <button onClick={toggleDarkMode} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800 text-gray-600 dark:text-gray-300">
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
+            <a
+              href="https://www.instagram.com/dewdrop_stories"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Follow on Instagram"
+              className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-pink-500 dark:hover:text-pink-400 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <circle cx="12" cy="12" r="4.5" />
+                <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none" />
+              </svg>
+            </a>
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 bg-gray-100 rounded-lg dark:bg-gray-800 text-gray-600 dark:text-gray-300">
               {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>

@@ -7,7 +7,6 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Stats from "./pages/Stats";
 import Navbar from "./components/Navbar";
-import FloatingInstagram from "./components/FloatingInstagram";
 
 const MotionDiv = framerMotion.div;
 
@@ -64,7 +63,6 @@ function App() {
       <div className="flex-1 pt-16 sm:pt-20">
         <AnimatedRoutes />
       </div>
-      <FloatingInstagram />
       <footer className="flex items-center justify-center gap-2 border-t border-gray-100 bg-white/60 px-4 py-2 backdrop-blur-sm dark:border-gray-800/60 dark:bg-gray-950/40">
         <span className="text-[10px] text-gray-400 dark:text-gray-500">© {new Date().getFullYear()} DewDrop Stories</span>
         <span className="text-gray-200 dark:text-gray-700 select-none">·</span>

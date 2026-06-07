@@ -120,21 +120,18 @@ export default function About() {
           What I Write About
         </h2>
         <div className="grid gap-5 sm:grid-cols-3">
-          {pillars.map(({ icon: Icon, title, description }) => {
-            const Comp = Icon;
-            return (
-              <div
-                key={title}
-                className="p-5 rounded-2xl bg-white dark:bg-gray-800/60 border border-amber-100 dark:border-amber-900/20 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 mb-4">
-                  <Comp size={20} className="text-amber-600 dark:text-amber-500" />
-                </div>
-                <h3 className="mb-2 text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
-                <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">{description}</p>
+          {pillars.map(({ icon: Icon, title, description }) => (
+            <div
+              key={title}
+              className="p-5 rounded-2xl bg-white dark:bg-gray-800/60 border border-amber-100 dark:border-amber-900/20 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 mb-4">
+                <Icon size={20} className="text-amber-600 dark:text-amber-500" />
               </div>
-            );
-          })}
+              <h3 className="mb-2 text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
+              <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">{description}</p>
+            </div>
+          ))}
         </div>
       </div>
 

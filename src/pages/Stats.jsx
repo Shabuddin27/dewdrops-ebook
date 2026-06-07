@@ -103,17 +103,15 @@ function heatColor(count) {
 }
 
 function StatCard({ Icon, label, value, sub, colorClass }) {
-  const Comp = Icon;
-
   return (
     <MotionDiv
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       className="p-3 sm:p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm flex flex-col gap-1"
     >
-        <div className={`inline-flex p-2 rounded-xl w-fit ${colorClass}`}>
-          <Comp size={15} />
-        </div>
+      <div className={`inline-flex p-2 rounded-xl w-fit ${colorClass}`}>
+        <Icon size={15} />
+      </div>
       <div className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{value}</div>
       <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{label}</div>
       {sub && <div className="text-[10px] text-gray-400 dark:text-gray-500">{sub}</div>}

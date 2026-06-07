@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "react-router-dom";
 import books from "../data/books.json";
 import { Search, X, ChevronDown, Clock, BookOpen, Heart, Grid, List, Share2, Info, Flame, Sparkles } from "lucide-react";
 import { motion as framerMotion, AnimatePresence } from "framer-motion";
@@ -52,43 +53,10 @@ const readingMinutes = (book) => {
 // unique categories across all books
 const ALL_CATEGORIES = ["All", ...Array.from(new Set(books.map(b => b.category).filter(Boolean)))];
 
-const DAILY_QUOTES = [
-  { text: "A reader lives a thousand lives before he dies. The man who never reads lives only one.", author: "George R.R. Martin" },
-  { text: "Not all those who wander are lost.", author: "J.R.R. Tolkien" },
-  { text: "There is no friend as loyal as a book.", author: "Ernest Hemingway" },
-  { text: "So it goes.", author: "Kurt Vonnegut" },
-  { text: "It was the best of times, it was the worst of times.", author: "Charles Dickens" },
-  { text: "She is too fond of books, and it has turned her brain.", author: "Louisa May Alcott" },
-  { text: "Words are, in my not-so-humble opinion, our most inexhaustible source of magic.", author: "J.K. Rowling" },
-  { text: "One must always be careful of books, and what is inside them, for words have the power to change us.", author: "Cassandra Clare" },
-  { text: "I took a deep breath and listened to the old brag of my heart: I am, I am, I am.", author: "Sylvia Plath" },
-  { text: "The world is a book, and those who do not travel read only one page.", author: "Saint Augustine" },
-  { text: "In the beginning was the Word.", author: "John 1:1" },
-  { text: "It does not do to dwell on dreams and forget to live.", author: "J.K. Rowling" },
-  { text: "There is some good in this world, and it's worth fighting for.", author: "J.R.R. Tolkien" },
-  { text: "We accept the love we think we deserve.", author: "Stephen Chbosky" },
-  { text: "I am not afraid of storms, for I am learning how to sail my ship.", author: "Louisa May Alcott" },
-  { text: "Whatever our souls are made of, his and mine are the same.", author: "Emily Brontë" },
-  { text: "It is our choices that show what we truly are, far more than our abilities.", author: "J.K. Rowling" },
-  { text: "To love at all is to be vulnerable.", author: "C.S. Lewis" },
-  { text: "The marks humans leave are too often scars.", author: "John Green" },
-  { text: "I am no bird; and no net ensnares me.", author: "Charlotte Brontë" },
-  { text: "We are all fools in love.", author: "Jane Austen" },
-  { text: "Not all treasure is silver and gold, mate.", author: "J.M. Barrie" },
-  { text: "The only way out of the labyrinth of suffering is to forgive.", author: "John Green" },
-  { text: "That's the thing about pain. It demands to be felt.", author: "John Green" },
-  { text: "You don't get to choose if you get hurt in this world, but you do have some say in who hurts you.", author: "John Green" },
-  { text: "A dream, all a dream, that ends in nothing, and leaves the sleeper where he lay down.", author: "Charles Dickens" },
-  { text: "Books are a uniquely portable magic.", author: "Stephen King" },
-  { text: "Wherever you go, go with all your heart.", author: "Confucius" },
-  { text: "The truth is rarely pure and never simple.", author: "Oscar Wilde" },
-  { text: "To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment.", author: "Ralph Waldo Emerson" },
-];
-
-const getQuoteOfDay = () => {
-  const d = new Date();
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-  return DAILY_QUOTES[seed % DAILY_QUOTES.length];
+const _quoteKey = `quote-${new Date().toISOString().slice(0, 10)}`;
+const _quoteFallback = { text: "A reader lives a thousand lives before he dies.", author: "George R.R. Martin" };
+const getCachedQuote = () => {
+  try { const c = JSON.parse(localStorage.getItem(_quoteKey)); return c?.text && c?.author ? c : null; } catch { return null; }
 };
 
 const getStreak = () => {
@@ -119,28 +87,39 @@ function Home() {
   const [wishlist, setWishlist]           = useState(getWishlist);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [category, setCategory]           = useState("All");
-  const [copiedId, setCopiedId]           = useState(null);   // share toast
-  const [descBook, setDescBook]           = useState(null);   // description modal
+  const [copiedId, setCopiedId]           = useState(null);
+  const [descBook, setDescBook]           = useState(null);
   const [streak, setStreak]               = useState(getStreak);
-  const quote                              = getQuoteOfDay();
+  const [quote, setQuote]                 = useState(() => getCachedQuote() || _quoteFallback);
 
   const searchRef = useRef(null);
   const inputRef  = useRef(null);
   const sortRef   = useRef(null);
 
-  // sync recent + streak on storage changes (from reader)
   useEffect(() => {
     const onStorage = () => { setRecent(getRecentReading()); setStreak(getStreak()); };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // auto-focus search input when bar opens
+  useEffect(() => {
+    if (getCachedQuote()) return;
+    const ctrl = new AbortController();
+    fetch("https://zenquotes.io/api/random", { signal: ctrl.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        const q = { text: data[0].q, author: data[0].a };
+        localStorage.setItem(_quoteKey, JSON.stringify(q));
+        setQuote(q);
+      })
+      .catch((e) => { if (e.name !== "AbortError") setQuote(_quoteFallback); });
+    return () => ctrl.abort();
+  }, []);
+
   useEffect(() => {
     if (searchOpen && inputRef.current) inputRef.current.focus();
   }, [searchOpen]);
 
-  // close dropdowns on outside click
   useEffect(() => {
     const handleClick = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false);
@@ -150,7 +129,6 @@ function Home() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // "/" key focuses search
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
@@ -226,6 +204,9 @@ function Home() {
     { value: "za",     label: "Z → A" },
   ];
 
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const progressMap = Object.fromEntries(recent.map(item => [item.bookId, item.progressPercent]));
+
   let filtered = books.filter(b =>
     b.title.toLowerCase().includes(search.toLowerCase()) &&
     (category === "All" || b.category === category) &&
@@ -251,7 +232,7 @@ function Home() {
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search books…  /"
+              placeholder={isTouch ? "Search books…" : "Search books…  /"}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => setSearchOpen(true)}
@@ -290,10 +271,10 @@ function Home() {
         <div className="flex flex-wrap gap-2">
           {/* Streak badge */}
           {streak > 0 && (
-            <div className="flex items-center gap-1 px-2.5 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-xl text-xs font-semibold text-orange-600 dark:text-orange-400" title={`${streak}-day reading streak`}>
+            <Link to="/stats" className="flex items-center gap-1 px-2.5 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-xl text-xs font-semibold text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors" title={`${streak}-day reading streak`}>
               <Flame size={13} />
               <span>{streak}</span>
-            </div>
+            </Link>
           )}
           {/* Sort */}
           <div ref={sortRef} className="relative">
@@ -358,7 +339,7 @@ function Home() {
 
       {/* ── QUOTE OF THE DAY ───────────────────────────────────────────────── */}
       {quote && (
-        <div className="-mx-3 sm:-mx-5 md:-mx-7 lg:-mx-10 mb-5 px-3 sm:px-5 md:px-7 lg:px-10 py-2.5 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-100 dark:border-amber-900/30">
+        <div className="-mx-3 sm:-mx-5 md:-mx-7 lg:-mx-10 mb-5 px-3 sm:px-5 md:px-7 lg:px-10 py-2.5 bg-amber-50 dark:bg-amber-950/30 border-y border-amber-100 dark:border-amber-800/40">
           <div className="flex items-center gap-1.5 mb-0.5">
             <Sparkles size={9} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
             <span className="text-[8px] font-bold tracking-[0.18em] uppercase text-amber-600 dark:text-amber-500">Quote of the Day</span>
@@ -395,7 +376,8 @@ function Home() {
             <Clock size={18} className="text-amber-600 dark:text-amber-500" />
             <h2 className="text-base font-semibold tracking-tight dark:text-white sm:text-lg">Continue Reading</h2>
           </div>
-          <div className="flex gap-2 py-0.5 overflow-x-auto scrollbar-hide">
+          <div className="relative">
+            <div className="flex gap-2 py-0.5 overflow-x-auto scrollbar-hide">
             {recent.slice(0, 5).map((item, i) => (
               <MotionDiv
                 key={i}
@@ -415,8 +397,13 @@ function Home() {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-[10px] font-semibold truncate text-gray-900 dark:text-white leading-tight">{item.book.title}</h3>
                     <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">
-                      Ch {item.chapter + 1} · Page {item.currentPage}/{item.totalPages} · {Math.round(item.progressPercent)}%
+                      Ch {item.chapter + 1} · {Math.round(item.progressPercent)}%
                     </p>
+                    {item.progressPercent < 100 && (
+                      <p className="text-[9px] text-amber-500 dark:text-amber-400">
+                        ~{Math.max(1, Math.round(readingMinutes(item.book) * (1 - item.progressPercent / 100)))} min left
+                      </p>
+                    )}
                     <div className="mt-1.5 h-[3px] bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <MotionDiv
                         initial={{ width: 0 }}
@@ -428,12 +415,14 @@ function Home() {
                   </div>
                   <button
                     onClick={(e) => removeFromRecent(item.bookId, e)}
-                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all text-[10px] leading-none"
+                    className="flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 transition-all text-[8px] md:opacity-0 md:group-hover:opacity-100"
                     title="Remove"
                   >✕</button>
                 </div>
               </MotionDiv>
             ))}
+            </div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#fdfaf4] dark:from-[#17150f] to-transparent" />
           </div>
         </section>
       )}
@@ -445,7 +434,7 @@ function Home() {
           <h2 className="text-base font-semibold tracking-tight dark:text-white sm:text-lg">
             Library
             {filtered.length > 0 && (
-              <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 sm:text-sm">({filtered.length} books)</span>
+              <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 sm:text-sm">({filtered.length} {filtered.length === 1 ? "book" : "books"})</span>
             )}
           </h2>
         </div>
@@ -464,7 +453,7 @@ function Home() {
                 {/* Cover */}
                 <div
                   onClick={() => openReader(book.id)}
-                  className="relative aspect-[2/3] rounded-r-md rounded-l-[3px] overflow-hidden transition-all duration-300 md:group-hover:-translate-y-2"
+                  className="relative aspect-[2/3] rounded-r-md rounded-l-[3px] overflow-hidden transition-all duration-300 md:group-hover:-translate-y-2 active:scale-[0.97]"
                   style={{ boxShadow: "3px 5px 10px rgba(0,0,0,0.28), 7px 10px 22px rgba(0,0,0,0.14)" }}
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = "5px 12px 20px rgba(0,0,0,0.38), 10px 18px 36px rgba(0,0,0,0.22)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "3px 5px 10px rgba(0,0,0,0.28), 7px 10px 22px rgba(0,0,0,0.14)"; }}
@@ -472,6 +461,13 @@ function Home() {
                   <img src={book.cover} className="object-cover w-full h-full" alt="" />
                   <div className="absolute inset-y-0 left-0 w-[10%] bg-gradient-to-r from-black/45 via-black/10 to-transparent pointer-events-none z-10" />
                   <div className="absolute inset-x-0 top-0 h-[5%] bg-gradient-to-b from-white/20 to-transparent pointer-events-none z-10" />
+
+                  {/* In-progress strip */}
+                  {progressMap[book.id] > 0 && progressMap[book.id] < 100 && (
+                    <div className="absolute bottom-0 inset-x-0 h-[3px] bg-black/20 z-20">
+                      <div className="h-full bg-amber-400" style={{ width: `${progressMap[book.id]}%` }} />
+                    </div>
+                  )}
 
                   {/* Read overlay */}
                   <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/45 transition-all duration-300 flex items-end justify-center pb-3 z-20">
@@ -500,17 +496,26 @@ function Home() {
                   </button>
                 </div>
 
-                {/* Title row — click title for description */}
-                <div className="mt-2 px-0.5">
-                  <h3
+                {/* Title row */}
+                <div className="mt-2 px-0.5 flex items-start justify-between gap-1">
+                  <div className="min-w-0">
+                    <h3
+                      onClick={(e) => openDesc(book, e)}
+                      className="text-[11px] font-medium leading-snug line-clamp-2 text-gray-800 dark:text-gray-200 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer sm:text-xs"
+                    >
+                      {book.title}
+                    </h3>
+                    <p className="mt-0.5 text-[9px] text-gray-400 dark:text-gray-500">
+                      ~{readingMinutes(book)} min read
+                    </p>
+                  </div>
+                  <button
                     onClick={(e) => openDesc(book, e)}
-                    className="text-[11px] font-medium leading-snug line-clamp-2 text-gray-800 dark:text-gray-200 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer sm:text-xs"
+                    className="flex-shrink-0 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mt-0.5"
+                    title="Details"
                   >
-                    {book.title}
-                  </h3>
-                  <p className="mt-0.5 text-[9px] text-gray-400 dark:text-gray-500">
-                    ~{readingMinutes(book)} min read
-                  </p>
+                    <Info size={12} />
+                  </button>
                 </div>
               </MotionDiv>
             ))}
@@ -564,6 +569,7 @@ function Home() {
 
         {filtered.length === 0 && (
           <div className="py-12 text-center sm:py-16">
+            <Search size={28} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
             <p className="text-xs text-gray-400 dark:text-gray-500 sm:text-sm">
               {showFavoritesOnly ? "No favorite books found." : "No books found matching your search."}
             </p>
