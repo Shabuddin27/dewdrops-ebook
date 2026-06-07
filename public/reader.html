@@ -15,6 +15,8 @@
     background-image:
       radial-gradient(circle at 20% 10%, rgba(255,255,255,.7), transparent 26%),
       linear-gradient(135deg, #f7f2ea 0%, #e7ded0 100%);
+    user-select: auto;
+    -webkit-user-select: auto;
   }
   .page-body{
     font-size: var(--rfs, 16px);
@@ -73,6 +75,9 @@
   #leftBody, #rightBody, #leftFolio, #rightFolio{
     position:relative;
     z-index:3;
+  }
+  #leftBody, #rightBody {
+    touch-action: auto;
   }
   .dark #reader{
     background-color:#141414;
@@ -144,7 +149,7 @@
 </head>
 <body class="bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] dark:from-[#1a1a1a] dark:to-[#0d0d0d]">
 
-<div id="reader" class="fixed inset-0 flex overflow-hidden select-none">
+<div id="reader" class="fixed inset-0 flex overflow-hidden">
 
   <!-- ============ READER CONTROLS POPUP ============ -->
   <div id="readerControls" class="absolute z-50 top-3 right-3 flex flex-col items-end gap-2">
@@ -257,7 +262,7 @@
     </div>
   </div>
 
-  <!-- ============ HIGHLIGHTS & NOTES PANEL (floating glass) ============ -->
+ <!-- ============ HIGHLIGHTS & NOTES PANEL (floating glass) ============ -->
   <div id="hlNotesWrap" class="hide fixed z-[100] top-12 sm:top-[3.5rem] left-2 w-[min(316px,calc(100vw-1rem))] max-h-[72vh] flex flex-col rounded-2xl overflow-hidden" style="background:rgba(255,250,241,0.88);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border:1px solid rgba(210,190,160,0.45);box-shadow:0 14px 44px rgba(72,55,34,0.22),0 1.5px 0 rgba(255,255,255,0.6) inset">
     <div class="flex items-center justify-between px-3.5 py-2.5 border-b flex-shrink-0" style="border-color:rgba(210,190,160,0.35)">
       <div class="flex items-center gap-2">
@@ -300,9 +305,23 @@
     <button id="hlNoteBtn" class="flex items-center gap-1 px-1.5 py-1 text-[10px] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap">
       <i data-lucide="pencil-line" class="w-3 h-3"></i><span>Note</span>
     </button>
+    <div class="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-0.5"></div>
+    <button id="hlDictBtn" class="flex items-center gap-1 px-1.5 py-1 text-[10px] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap" title="Define">
+      <i data-lucide="book-open" class="w-3 h-3"></i><span>Define</span>
+    </button>
+    <div class="w-px h-4 bg-gray-200 dark:bg-gray-600 mx-0.5"></div>
     <button id="hlCancelBtn" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
       <i data-lucide="x" class="w-3 h-3"></i>
     </button>
+  </div>
+
+  <!-- ============ DICTIONARY CARD ============ -->
+  <div id="dictCard" class="hide fixed z-[190] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="overflow-y-auto px-4 py-3" style="max-height:210px">
+      <p id="dictLoading" class="text-xs text-gray-400 text-center py-1">Looking up…</p>
+      <div id="dictResult" class="hide"></div>
+      <p id="dictNoResult" class="hide text-xs text-gray-400 text-center py-1"></p>
+    </div>
   </div>
 
   <!-- ============ HIGHLIGHT POPUP (click on mark) ============ -->
@@ -329,7 +348,7 @@
   <!-- ============ MAIN AREA ============ -->
   <div class="relative flex flex-col items-center justify-center flex-1 h-full min-h-0 gap-1.5 px-1.5 py-1.5 overflow-hidden sm:gap-2 sm:px-2 sm:py-2 md:px-3 md:py-3">
 
-    <div class="absolute z-50 flex gap-2 top-2 left-2">
+    <div id="topNav" class="absolute z-50 flex gap-2 top-2 left-2">
       <button id="backBtn" title="Back" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="arrow-left" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
       <button id="tocBtn" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="menu" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
       <button id="bmarkBtn" title="Bookmarks" class="p-1.5 text-[#6f5f4b] dark:text-gray-300 bg-[#fffaf1]/90 dark:bg-gray-800/90 border border-[#e2d2ba] dark:border-gray-700 rounded-lg shadow-md backdrop-blur hover:bg-white dark:hover:bg-gray-700 active:scale-95 sm:p-2"><i data-lucide="bookmark" class="w-4 h-4 sm:w-[18px] sm:h-[18px]"></i></button>
@@ -449,19 +468,28 @@ function getAbsoluteOffset(container, targetNode, offset){
 }
 
 let selState = null; // {chapterIndex, start, end, text}
+let _lastSelRect = null;
 let pendingHlColor = null;
 
 function handleTextSelection(){
   if(view !== 'reading'){ hideHlToolbar(); return; }
   const sel = window.getSelection();
   if(!sel || sel.rangeCount === 0 || sel.isCollapsed){ hideHlToolbar(); return; }
-  const range = sel.getRangeAt(0);
+  let range = sel.getRangeAt(0);
+
+  const startNode = range.startContainer;
+  const endNode = range.endContainer;
+  const startInLeft = leftBody.contains(startNode);
+  const endInLeft = leftBody.contains(endNode);
+  const startInRight = !isMobile() && rightBody.contains(startNode);
+  const endInRight = !isMobile() && rightBody.contains(endNode);
 
   let pageBody = null, pageIdx = -1;
   const L = spreadStart();
-  if(leftBody.contains(range.commonAncestorContainer)){
+
+  if(startInLeft && endInLeft){
     pageBody = leftBody; pageIdx = L;
-  } else if(!isMobile() && rightBody.contains(range.commonAncestorContainer)){
+  } else if(startInRight && endInRight){
     pageBody = rightBody; pageIdx = L + 1;
   }
   if(!pageBody || pageIdx < 0 || pageIdx >= pages.length){ hideHlToolbar(); return; }
@@ -471,29 +499,89 @@ function handleTextSelection(){
   const endInPage   = getAbsoluteOffset(pageBody, range.endContainer,   range.endOffset);
   if(startInPage >= endInPage){ hideHlToolbar(); return; }
 
+
+
   const txt = sel.toString().trim();
   if(!txt){ hideHlToolbar(); return; }
 
+  const selRect = range.getBoundingClientRect();
   selState = { chapterIndex, start: pd.start + startInPage, end: pd.start + endInPage, text: txt };
-
-  const rect = range.getBoundingClientRect();
-  showHlToolbar(rect);
+  _lastSelRect = selRect;
+  showHlToolbar(selRect);
 }
 
+let _hlToolbarReady = false;
 function showHlToolbar(rect){
   const tb = $('hlToolbar');
+  if(!_hlToolbarReady && window.lucide){ lucide.createIcons({element: tb}); _hlToolbarReady = true; }
   tb.classList.remove('hide');
-  if(window.lucide) lucide.createIcons({element: tb});
-  const tbW = tb.offsetWidth || 200;
-  const tbH = tb.offsetHeight || 36;
-  let x = rect.left + rect.width / 2 - tbW / 2;
-  let y = rect.top - tbH - 8;
-  if(y < 8) y = rect.bottom + 8;
-  x = Math.max(8, Math.min(x, window.innerWidth - tbW - 8));
-  tb.style.left = x + 'px'; tb.style.top = y + 'px';
+  if('ontouchstart' in window){
+    tb.style.top = ''; tb.style.transform = 'translateX(-50%)';
+    tb.style.left = '50%'; tb.style.bottom = '24px';
+  } else {
+    tb.style.transform = ''; tb.style.bottom = '';
+    const tbW = tb.offsetWidth || 200;
+    const tbH = tb.offsetHeight || 36;
+    let x = rect.left + rect.width / 2 - tbW / 2;
+    let y = rect.top - tbH - 8;
+    if(y < 8) y = rect.bottom + 8;
+    x = Math.max(8, Math.min(x, window.innerWidth - tbW - 8));
+    tb.style.left = x + 'px'; tb.style.top = y + 'px';
+  }
 }
 
-function hideHlToolbar(){ $('hlToolbar').classList.add('hide'); selState = null; }
+function hideHlToolbar(){ $('hlToolbar').classList.add('hide'); hideDictCard(); selState = null; }
+
+let _dictCtrl = null;
+function hideDictCard(){ $('dictCard').classList.add('hide'); if(_dictCtrl){ _dictCtrl.abort(); _dictCtrl=null; } }
+function positionDictCard(rect){
+  const card = $('dictCard');
+  card.style.width = '260px';
+  const cH = 240;
+  let x = rect.left + rect.width / 2 - 130;
+  let y = rect.top - cH - 10;
+  if(y < 8) y = rect.bottom + 8;
+  x = Math.max(8, Math.min(x, window.innerWidth - 268));
+  card.style.left = x + 'px'; card.style.top = y + 'px';
+}
+async function lookupWord(word, rect){
+  const card = $('dictCard');
+  const loading = $('dictLoading');
+  const result = $('dictResult');
+  const noResult = $('dictNoResult');
+  hideDictCard();
+  loading.classList.remove('hide');
+  result.classList.add('hide'); result.innerHTML = '';
+  noResult.classList.add('hide');
+  positionDictCard(rect || {left:window.innerWidth/2-130, top:80, bottom:120, width:0});
+  card.classList.remove('hide');
+  _dictCtrl = new AbortController();
+  try{
+    const term = word.trim().split(/\s+/)[0].replace(/[^a-zA-Z'-]/g,'');
+    if(!term){ loading.classList.add('hide'); noResult.textContent='Select a single word to define.'; noResult.classList.remove('hide'); return; }
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`, {signal:_dictCtrl.signal});
+    if(!res.ok) throw new Error('not found');
+    const data = await res.json();
+    const entry = data[0];
+    let html = `<p class="text-xs font-bold text-gray-800 dark:text-gray-100 mb-1">${escHtml(entry.word)}</p>`;
+    if(entry.phonetic) html += `<p class="text-[10px] text-gray-400 mb-2">${escHtml(entry.phonetic)}</p>`;
+    entry.meanings.slice(0,3).forEach(m=>{
+      html += `<p class="text-[9px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400 mt-2 mb-0.5">${escHtml(m.partOfSpeech)}</p>`;
+      m.definitions.slice(0,2).forEach(d=>{
+        html += `<p class="text-[10.5px] text-gray-700 dark:text-gray-300 leading-snug mb-1">• ${escHtml(d.definition)}</p>`;
+        if(d.example) html += `<p class="text-[9.5px] text-gray-400 italic mb-1 pl-2">"${escHtml(d.example)}"</p>`;
+      });
+    });
+    loading.classList.add('hide');
+    result.innerHTML = html;
+    result.classList.remove('hide');
+  } catch(e){
+    if(e.name==='AbortError') return;
+    loading.classList.add('hide');
+    noResult.textContent = 'No definition found.';
+    noResult.classList.remove('hide');
+  }
+}
 
 function saveHighlight(color, note){
   if(!selState) return;
@@ -508,6 +596,7 @@ function saveHighlight(color, note){
   saveHighlights();
   hideHlToolbar();
   window.getSelection()?.removeAllRanges();
+  if(searchActive) closeSearch(false);
   renderReading();
 }
 
@@ -723,11 +812,11 @@ function openSearch(){
   if(window.lucide) lucide.createIcons({element:$('searchBar')});
   setTimeout(()=>$('searchInput').focus(),40);
 }
-function closeSearch(){
+function closeSearch(render = true){
   searchActive=false; searchQuery=''; searchMatches=[]; searchMatchIdx=-1;
   $('searchInput').value=''; $('searchCount').textContent='';
   $('searchBar').classList.add('hide');
-  if(view==='reading') renderReading();
+  if(view==='reading' && render) renderReading();
 }
 function clearSearchMatches(){
   searchMatches=[]; searchMatchIdx=-1; updateSearchCount();
@@ -846,7 +935,6 @@ function buildHighlightsList(){
 function applySpreadLayout(){
   const mobile = isMobile();
   rightPage.style.display = mobile ? 'none' : 'flex';
-  rightPage.style.visibility = 'visible';
 }
 
 function skipWS(t,i){ while(i<t.length && /\s/.test(t[i])) i++; return i; }
@@ -962,7 +1050,6 @@ function renderReading(){
     rightBody.innerHTML = renderPageText(ptR, pages[R]?.start || 0);
     wireHighlightClicks(rightBody);
     rightFolio.textContent=(R+1)+' / '+pages.length;
-    rightPage.style.visibility='visible';
   }else{
     rightBody.innerHTML=''; rightFolio.textContent='';
   }
@@ -977,11 +1064,11 @@ function next(){
   if(view==='cover'){ showIntro(0); return; }
   if(view==='intro'){ openReadingAt(0); return; }
   if(isMobile()){
-    if(page<pages.length-1){ page++; renderReading(); saveProgress(); }
+    if(page<pages.length-1){ page++; renderReading(); saveProgress(true); }
     else if(chapterIndex<BOOK.chapters.length-1){ showIntro(chapterIndex+1); }
   }else{
     const L=spreadStart();
-    if(L+2<pages.length){ page=L+2; renderReading(); saveProgress(); }
+    if(L+2<pages.length){ page=L+2; renderReading(); saveProgress(true); }
     else if(chapterIndex<BOOK.chapters.length-1){ showIntro(chapterIndex+1); }
   }
 }
@@ -992,10 +1079,10 @@ function prev(){
     return;
   }
   if(isMobile()){
-    if(page>0){ page--; renderReading(); saveProgress(); } else { showIntro(chapterIndex); }
+    if(page>0){ page--; renderReading(); saveProgress(true); } else { showIntro(chapterIndex); }
   }else{
     const L=spreadStart();
-    if(L-2>=0){ page=L-2; renderReading(); saveProgress(); } else { showIntro(chapterIndex); }
+    if(L-2>=0){ page=L-2; renderReading(); saveProgress(true); } else { showIntro(chapterIndex); }
   }
 }
 
@@ -1098,13 +1185,14 @@ function loadSettings(){
 }
 
 /* ─── Progress ──────────────────────────────────────────────────── */
-function saveProgress(){
+function saveProgress(countAsRead=false){
   if(!BOOK || view!=='reading' || !pages.length) return;
-  logReadingActivity();
+  if(countAsRead) logReadingActivity();
   try{
     const L=spreadStart(); const R=isMobile()?-1:(L+1<pages.length?L+1:-1);
-    const entry={ bookId:BOOK.id, chapter:chapterIndex, position:pages[page]?pages[page].start:0,
-      pageIndex:(R!==-1?R:L), totalPages:pages.length, updatedAt:Date.now() };
+    const currentPageIndex = R!==-1 ? R : L;
+    const entry={ bookId:BOOK.id, chapter:chapterIndex, position:pages[currentPageIndex]?.start || 0,
+      pageIndex:currentPageIndex, totalPages:pages.length, updatedAt:Date.now() };
     let ex=JSON.parse(localStorage.getItem('reading-progress'))||[]; if(!Array.isArray(ex)) ex=[];
     ex=ex.filter(p=>p.bookId!==BOOK.id); ex.unshift(entry);
     localStorage.setItem('reading-progress', JSON.stringify(ex.slice(0,10)));
@@ -1133,6 +1221,7 @@ function tapHandler(el){
   el.addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
   el.addEventListener('touchend',e=>{
     if(hasTextSelection()) return;
+    if(selState){ hideHlToolbar(); return; }
     if(anyPanelOpen()) return; // swipe outside panel just dismisses it
     const d=tx-e.changedTouches[0].clientX; if(d>50) next(); else if(d<-50) prev();
   });
@@ -1147,7 +1236,15 @@ document.addEventListener('keydown',e=>{
 
 /* ─── Text selection for highlights ────────────────────────────── */
 spread.addEventListener('mouseup', handleTextSelection);
-spread.addEventListener('touchend', () => setTimeout(handleTextSelection, 80));
+if('ontouchstart' in window){
+  let _mobSelTimer = null;
+  document.addEventListener('selectionchange', () => {
+    clearTimeout(_mobSelTimer);
+    const s = window.getSelection();
+    if(!s || s.isCollapsed || !s.rangeCount) return;
+    _mobSelTimer = setTimeout(handleTextSelection, 400);
+  });
+}
 
 /* ─── Button wiring ─────────────────────────────────────────────── */
 $('backBtn').addEventListener('click',()=>{ if(document.referrer && new URL(document.referrer).origin===location.origin) history.back(); else location.href='/'; });
@@ -1171,10 +1268,22 @@ $('searchInput').addEventListener('keydown', e=>{
 $('searchPrev').addEventListener('click', ()=>navigateToSearchMatch(searchMatchIdx-1));
 $('searchNext').addEventListener('click', ()=>navigateToSearchMatch(searchMatchIdx+1));
 
+function closeHighlightToolsOnOutsidePress(e){
+  const toolbar=$('hlToolbar'), dict=$('dictCard'), noteModal=$('noteModal');
+  if(toolbar.classList.contains('hide')) return;
+  if(!noteModal.classList.contains('hide')) return;
+  if(toolbar.contains(e.target) || dict.contains(e.target)) return;
+  hideHlToolbar();
+}
+document.addEventListener('pointerdown', closeHighlightToolsOnOutsidePress, true);
+
 $('settingsBtn').addEventListener('click',(e)=>{ e.stopPropagation(); const panel=$('readerControlsPanel'); const opening=panel.classList.contains('hidden'); closeSearch(); closeHighlightsDrawer(); closeBmarkDrawer(); if(opening){ panel.classList.remove('hidden'); if(window.lucide) lucide.createIcons(); } else panel.classList.add('hidden'); });
 document.addEventListener('click', e=>{
   const panel=$('readerControlsPanel'); if(!panel.classList.contains('hidden')) panel.classList.add('hidden');
-  if(!$('searchBar').classList.contains('hide') && !$('searchBar').contains(e.target) && !$('searchBtn').contains(e.target)) closeSearch();
+  if(!$('searchBar').classList.contains('hide') && !$('searchBar').contains(e.target) && !$('searchBtn').contains(e.target)){
+    if(hasTextSelection()) closeSearch(false);
+    else closeSearch();
+  }
   if(!$('hlNotesWrap').classList.contains('hide') && !$('hlNotesWrap').contains(e.target) && !$('hlNotesBtn').contains(e.target)) closeHighlightsDrawer();
   if(!$('bmarkWrap').classList.contains('hide') && !$('bmarkWrap').contains(e.target) && !$('bmarkBtn').contains(e.target)) closeBmarkDrawer();
   if(!$('tocWrap').classList.contains('hide') && !$('tocInner').contains(e.target) && !$('tocBtn').contains(e.target)) closeToc();
@@ -1194,6 +1303,10 @@ $('hlNoteBtn').addEventListener('click', () => {
   setTimeout(() => $('noteInput').focus(), 50);
 });
 $('hlCancelBtn').addEventListener('click', () => { hideHlToolbar(); window.getSelection()?.removeAllRanges(); });
+$('hlDictBtn').addEventListener('click', () => {
+  if(!selState) return;
+  lookupWord(selState.text, _lastSelRect || $('hlToolbar').getBoundingClientRect());
+});
 
 // Note modal
 $('noteSaveBtn').addEventListener('click', () => {
@@ -1258,8 +1371,16 @@ function fatal(html){ reader.innerHTML='<div class="flex flex-col items-center j
     requestAnimationFrame(()=>{
       const res=paginate(BOOK.chapters[chapterIndex].content||'');
       if(res){ pages=res;
-        let idx=pages.findIndex(p=>(saved.position||0)>=p.start && (saved.position||0)<p.end);
-        page=idx<0?0:idx; renderReading(); }
+        const savedPosition = Number.isFinite(Number(saved.position)) ? Number(saved.position) : null;
+        let idx = -1;
+        if(Number.isFinite(Number(saved.pageIndex)) && Number(saved.totalPages)===pages.length){
+          idx = Math.min(Math.max(Number(saved.pageIndex),0),pages.length-1);
+        }
+        if(idx<0 && savedPosition != null){
+          idx = pages.findIndex(p=>savedPosition>=p.start && savedPosition<p.end);
+        }
+        page=idx<0?0:(isMobile()?idx:Math.floor(idx/2)*2);
+        renderReading(); }
       repaginate();
     });
   } else {

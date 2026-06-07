@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import books from "../data/books.json";
-import { Search, X, ChevronDown, Clock, BookOpen, Heart, Grid, List, Share2, Info } from "lucide-react";
+import { Search, X, ChevronDown, Clock, BookOpen, Heart, Grid, List, Share2, Info, Flame, Sparkles } from "lucide-react";
 import { motion as framerMotion, AnimatePresence } from "framer-motion";
 
 const MotionDiv = framerMotion.div;
@@ -52,6 +52,61 @@ const readingMinutes = (book) => {
 // unique categories across all books
 const ALL_CATEGORIES = ["All", ...Array.from(new Set(books.map(b => b.category).filter(Boolean)))];
 
+const DAILY_QUOTES = [
+  { text: "A reader lives a thousand lives before he dies. The man who never reads lives only one.", author: "George R.R. Martin" },
+  { text: "Not all those who wander are lost.", author: "J.R.R. Tolkien" },
+  { text: "There is no friend as loyal as a book.", author: "Ernest Hemingway" },
+  { text: "So it goes.", author: "Kurt Vonnegut" },
+  { text: "It was the best of times, it was the worst of times.", author: "Charles Dickens" },
+  { text: "She is too fond of books, and it has turned her brain.", author: "Louisa May Alcott" },
+  { text: "Words are, in my not-so-humble opinion, our most inexhaustible source of magic.", author: "J.K. Rowling" },
+  { text: "One must always be careful of books, and what is inside them, for words have the power to change us.", author: "Cassandra Clare" },
+  { text: "I took a deep breath and listened to the old brag of my heart: I am, I am, I am.", author: "Sylvia Plath" },
+  { text: "The world is a book, and those who do not travel read only one page.", author: "Saint Augustine" },
+  { text: "In the beginning was the Word.", author: "John 1:1" },
+  { text: "It does not do to dwell on dreams and forget to live.", author: "J.K. Rowling" },
+  { text: "There is some good in this world, and it's worth fighting for.", author: "J.R.R. Tolkien" },
+  { text: "We accept the love we think we deserve.", author: "Stephen Chbosky" },
+  { text: "I am not afraid of storms, for I am learning how to sail my ship.", author: "Louisa May Alcott" },
+  { text: "Whatever our souls are made of, his and mine are the same.", author: "Emily Brontë" },
+  { text: "It is our choices that show what we truly are, far more than our abilities.", author: "J.K. Rowling" },
+  { text: "To love at all is to be vulnerable.", author: "C.S. Lewis" },
+  { text: "The marks humans leave are too often scars.", author: "John Green" },
+  { text: "I am no bird; and no net ensnares me.", author: "Charlotte Brontë" },
+  { text: "We are all fools in love.", author: "Jane Austen" },
+  { text: "Not all treasure is silver and gold, mate.", author: "J.M. Barrie" },
+  { text: "The only way out of the labyrinth of suffering is to forgive.", author: "John Green" },
+  { text: "That's the thing about pain. It demands to be felt.", author: "John Green" },
+  { text: "You don't get to choose if you get hurt in this world, but you do have some say in who hurts you.", author: "John Green" },
+  { text: "A dream, all a dream, that ends in nothing, and leaves the sleeper where he lay down.", author: "Charles Dickens" },
+  { text: "Books are a uniquely portable magic.", author: "Stephen King" },
+  { text: "Wherever you go, go with all your heart.", author: "Confucius" },
+  { text: "The truth is rarely pure and never simple.", author: "Oscar Wilde" },
+  { text: "To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment.", author: "Ralph Waldo Emerson" },
+];
+
+const getQuoteOfDay = () => {
+  const d = new Date();
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  return DAILY_QUOTES[seed % DAILY_QUOTES.length];
+};
+
+const getStreak = () => {
+  try {
+    const log = JSON.parse(localStorage.getItem("reading-log")) || {};
+    if (typeof log !== "object" || Array.isArray(log)) return 0;
+    const toKey = d => d.toISOString().slice(0, 10);
+    const today = new Date();
+    let streak = 0;
+    const start = log[toKey(today)] ? 0 : 1;
+    for (let i = start; i < 365; i++) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      if (log[toKey(d)]) streak++; else break;
+    }
+    return streak;
+  } catch { return 0; }
+};
+
 // ─── component ──────────────────────────────────────────────────────────────
 
 function Home() {
@@ -66,14 +121,16 @@ function Home() {
   const [category, setCategory]           = useState("All");
   const [copiedId, setCopiedId]           = useState(null);   // share toast
   const [descBook, setDescBook]           = useState(null);   // description modal
+  const [streak, setStreak]               = useState(getStreak);
+  const quote                              = getQuoteOfDay();
 
   const searchRef = useRef(null);
   const inputRef  = useRef(null);
   const sortRef   = useRef(null);
 
-  // sync recent on storage changes (from reader)
+  // sync recent + streak on storage changes (from reader)
   useEffect(() => {
-    const onStorage = () => setRecent(getRecentReading());
+    const onStorage = () => { setRecent(getRecentReading()); setStreak(getStreak()); };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
@@ -231,6 +288,13 @@ function Home() {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {/* Streak badge */}
+          {streak > 0 && (
+            <div className="flex items-center gap-1 px-2.5 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 rounded-xl text-xs font-semibold text-orange-600 dark:text-orange-400" title={`${streak}-day reading streak`}>
+              <Flame size={13} />
+              <span>{streak}</span>
+            </div>
+          )}
           {/* Sort */}
           <div ref={sortRef} className="relative">
             <button
@@ -292,6 +356,19 @@ function Home() {
         </div>
       </div>
 
+      {/* ── QUOTE OF THE DAY ───────────────────────────────────────────────── */}
+      {quote && (
+        <div className="-mx-3 sm:-mx-5 md:-mx-7 lg:-mx-10 mb-5 px-3 sm:px-5 md:px-7 lg:px-10 py-2.5 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-100 dark:border-amber-900/30">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <Sparkles size={9} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+            <span className="text-[8px] font-bold tracking-[0.18em] uppercase text-amber-600 dark:text-amber-500">Quote of the Day</span>
+          </div>
+          <p className="font-serif italic text-[11.5px] leading-snug text-gray-600 dark:text-gray-400 line-clamp-2">
+            &ldquo;{quote.text}&rdquo;&ensp;<span className="not-italic text-[10px] text-gray-400 dark:text-gray-500">— {quote.author}</span>
+          </p>
+        </div>
+      )}
+
       {/* ── CATEGORY CHIPS ───────────────────────────────────────────────── */}
       {ALL_CATEGORIES.length > 1 && (
         <div className="flex gap-2 mb-5 overflow-x-auto pb-0.5 scrollbar-hide">
@@ -337,7 +414,9 @@ function Home() {
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-[10px] font-semibold truncate text-gray-900 dark:text-white leading-tight">{item.book.title}</h3>
-                    <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">Ch {item.chapter + 1} · {Math.round(item.progressPercent)}%</p>
+                    <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">
+                      Ch {item.chapter + 1} · Page {item.currentPage}/{item.totalPages} · {Math.round(item.progressPercent)}%
+                    </p>
                     <div className="mt-1.5 h-[3px] bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <MotionDiv
                         initial={{ width: 0 }}

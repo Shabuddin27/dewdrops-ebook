@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Flame, BookOpen, Target, Calendar, TrendingUp, Minus, Plus, CheckCircle } from "lucide-react";
+import { Flame, BookOpen, Target, Calendar, TrendingUp, Minus, Plus, CheckCircle, Trophy } from "lucide-react";
+import books from "../data/books.json";
 import { motion as framerMotion } from "framer-motion";
 
 const MotionDiv = framerMotion.div;
@@ -40,14 +41,18 @@ function computeStats(log) {
   const totalPageTurns = Object.values(log).reduce((s, n) => s + n, 0);
   try {
     const progress = JSON.parse(localStorage.getItem("reading-progress")) || [];
-    if (!Array.isArray(progress)) return { totalPageTurns, booksStarted: 0, chaptersRead: 0 };
-    const booksStarted = new Set(progress.map(p => p.bookId)).size;
-    const chaptersRead = progress.reduce((s, p) => {
-      const pct = p.totalPages > 0 ? (p.pageIndex || 0) / p.totalPages : 0;
-      return s + (pct >= 0.9 ? 1 : 0);
-    }, 0);
-    return { totalPageTurns, booksStarted, chaptersRead };
-  } catch { return { totalPageTurns, booksStarted: 0, chaptersRead: 0 }; }
+    const booksStarted = Array.isArray(progress) ? new Set(progress.map(p => p.bookId)).size : 0;
+    let chaptersRead = 0, booksCompleted = 0;
+    for (const book of books) {
+      try {
+        const raw = JSON.parse(localStorage.getItem("completed-" + book.id));
+        const done = Array.isArray(raw) ? new Set(raw) : new Set();
+        chaptersRead += done.size;
+        if (book.chapters?.length > 0 && done.size >= book.chapters.length) booksCompleted++;
+      } catch { }
+    }
+    return { totalPageTurns, booksStarted, chaptersRead, booksCompleted };
+  } catch { return { totalPageTurns, booksStarted: 0, chaptersRead: 0, booksCompleted: 0 }; }
 }
 
 // Build a 15-week heatmap grid (Sun–Sat columns)
@@ -181,7 +186,7 @@ export default function Stats() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-2.5 mb-4 sm:grid-cols-4 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2.5 mb-4 sm:grid-cols-3 sm:gap-3">
         <StatCard
           Icon={Flame}
           label="Day Streak"
@@ -196,11 +201,23 @@ export default function Stats() {
           colorClass="text-amber-600 bg-amber-50 dark:bg-amber-900/20"
         />
         <StatCard
+          Icon={Trophy}
+          label="Books Finished"
+          value={stats.booksCompleted}
+          colorClass="text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20"
+        />
+        <StatCard
           Icon={Target}
           label="Today"
           value={todayPages}
           sub={`goal: ${goal} pages`}
           colorClass="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
+        />
+        <StatCard
+          Icon={CheckCircle}
+          label="Chapters Read"
+          value={stats.chaptersRead}
+          colorClass="text-violet-500 bg-violet-50 dark:bg-violet-900/20"
         />
         <StatCard
           Icon={TrendingUp}
