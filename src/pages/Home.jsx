@@ -53,10 +53,79 @@ const readingMinutes = (book) => {
 // unique categories across all books
 const ALL_CATEGORIES = ["All", ...Array.from(new Set(books.map(b => b.category).filter(Boolean)))];
 
-const _quoteKey = `quote-${new Date().toISOString().slice(0, 10)}`;
-const _quoteFallback = { text: "A reader lives a thousand lives before he dies.", author: "George R.R. Martin" };
-const getCachedQuote = () => {
-  try { const c = JSON.parse(localStorage.getItem(_quoteKey)); return c?.text && c?.author ? c : null; } catch { return null; }
+const QUOTES = [
+  { text: "A reader lives a thousand lives before he dies.", author: "George R.R. Martin" },
+  { text: "Not all those who wander are lost.", author: "J.R.R. Tolkien" },
+  { text: "It is our choices that show what we truly are, far more than our abilities.", author: "J.K. Rowling" },
+  { text: "There is no friend as loyal as a book.", author: "Ernest Hemingway" },
+  { text: "The more that you read, the more things you will know.", author: "Dr. Seuss" },
+  { text: "One must always be careful of books, and what is inside them.", author: "Cassandra Clare" },
+  { text: "A book is a dream that you hold in your hands.", author: "Neil Gaiman" },
+  { text: "Words are, in my not-so-humble opinion, our most inexhaustible source of magic.", author: "J.K. Rowling" },
+  { text: "It does not do to dwell on dreams and forget to live.", author: "J.K. Rowling" },
+  { text: "The world is a book, and those who do not travel read only one page.", author: "Saint Augustine" },
+  { text: "Stories are a communal currency of humanity.", author: "Tahir Shah" },
+  { text: "A room without books is like a body without a soul.", author: "Marcus Tullius Cicero" },
+  { text: "You can never get a cup of tea large enough or a book long enough to suit me.", author: "C.S. Lewis" },
+  { text: "If you only read the books that everyone else is reading, you can only think what everyone else is thinking.", author: "Haruki Murakami" },
+  { text: "The books that the world calls immoral are books that show the world its own shame.", author: "Oscar Wilde" },
+  { text: "Classic — a book which people praise and don't read.", author: "Mark Twain" },
+  { text: "Good friends, good books, and a sleepy conscience: this is the ideal life.", author: "Mark Twain" },
+  { text: "I am not afraid of storms, for I am learning how to sail my ship.", author: "Louisa May Alcott" },
+  { text: "Until I feared I would lose it, I never loved to read. One does not love breathing.", author: "Harper Lee" },
+  { text: "You think your pain and your heartbreak are unprecedented in the history of the world, but then you read.", author: "James Baldwin" },
+  { text: "The only way out of the labyrinth of suffering is to forgive.", author: "John Green" },
+  { text: "We read to know we are not alone.", author: "C.S. Lewis" },
+  { text: "Books are the mirrors of the soul.", author: "Virginia Woolf" },
+  { text: "Literature is the most agreeable way of ignoring life.", author: "Fernando Pessoa" },
+  { text: "That's the thing about books. They let you travel without moving your feet.", author: "Jhumpa Lahiri" },
+  { text: "The very ink with which history is written is merely fluid prejudice.", author: "Mark Twain" },
+  { text: "There is no real ending. It's just the place where you stop the story.", author: "Frank Herbert" },
+  { text: "I took a deep breath and listened to the old brag of my heart: I am, I am, I am.", author: "Sylvia Plath" },
+  { text: "Every story I create, creates me.", author: "Octavia E. Butler" },
+  { text: "A word after a word after a word is power.", author: "Margaret Atwood" },
+  { text: "Perhaps one did not want to be loved so much as to be understood.", author: "George Orwell" },
+  { text: "Time is the longest distance between two places.", author: "Tennessee Williams" },
+  { text: "We are all of us the living dead. The only difference is we know it.", author: "Cormac McCarthy" },
+  { text: "What really knocks me out is a book that, when you're all done reading it, you wish the author that wrote it was a terrific friend of yours.", author: "J.D. Salinger" },
+  { text: "Not all readers are leaders, but all leaders are readers.", author: "Harry S. Truman" },
+  { text: "Reading is an act of civilization.", author: "Ben Okri" },
+  { text: "Books are lighthouses erected in the great sea of time.", author: "E.P. Whipple" },
+  { text: "I declare after all there is no enjoyment like reading!", author: "Jane Austen" },
+  { text: "To learn to read is to light a fire.", author: "Victor Hugo" },
+  { text: "Once you learn to read, you will be forever free.", author: "Frederick Douglass" },
+  { text: "Reading gives us someplace to go when we have to stay where we are.", author: "Mason Cooley" },
+  { text: "I would be most content if my children grew up to be the kind of people who think decorating consists mostly of building enough bookshelves.", author: "Anna Quindlen" },
+  { text: "The reading of all good books is like a conversation with the finest minds of past centuries.", author: "René Descartes" },
+  { text: "Sleep is good, death is better; but of course, the best thing would to have never been born at all.", author: "Heinrich Heine" },
+  { text: "Libraries were full of ideas — perhaps the most dangerous and powerful of all weapons.", author: "Sarah J. Maas" },
+  { text: "Things need not have happened to be true. Tales and dreams are the shadow-truths that will endure when mere facts are dust and ashes.", author: "Neil Gaiman" },
+  { text: "No tears in the writer, no tears in the reader.", author: "Robert Frost" },
+  { text: "In the beginning was the Word.", author: "The Gospel of John" },
+  { text: "The books transported her into new worlds and introduced her to amazing people who lived exciting lives.", author: "Roald Dahl" },
+  { text: "I kept always two books in my pocket, one to read, one to write in.", author: "Robert Louis Stevenson" },
+  { text: "A great book should leave you with many experiences, and slightly exhausted at the end.", author: "William Styron" },
+  { text: "Fiction is the truth inside the lie.", author: "Stephen King" },
+  { text: "The end of a melody is not its goal.", author: "Friedrich Nietzsche" },
+  { text: "Writing is the painting of the voice.", author: "Voltaire" },
+  { text: "I am two fools, I know, for loving, and for saying so.", author: "John Donne" },
+  { text: "We are all apprentices in a craft where no one ever becomes a master.", author: "Ernest Hemingway" },
+  { text: "To write is human, to edit is divine.", author: "Stephen King" },
+  { text: "There is no greater agony than bearing an untold story inside you.", author: "Maya Angelou" },
+  { text: "One day I will find the right words, and they will be simple.", author: "Jack Kerouac" },
+  { text: "If you want to be a writer, you must do two things above all others: read a lot and write a lot.", author: "Stephen King" },
+  { text: "The job of the artist is always to deepen the mystery.", author: "Francis Bacon" },
+  { text: "Every secret of a writer's soul, every experience of his life, every quality of his mind, is written large in his works.", author: "Virginia Woolf" },
+  { text: "We tell ourselves stories in order to live.", author: "Joan Didion" },
+  { text: "If there's a book that you want to read, but it hasn't been written yet, then you must write it.", author: "Toni Morrison" },
+  { text: "There is no greater agony than bearing an untold story inside you.", author: "Zora Neale Hurston" },
+  { text: "Somewhere, something incredible is waiting to be known.", author: "Carl Sagan" },
+];
+
+const getDailyQuote = () => {
+  const now = new Date();
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  return QUOTES[dayOfYear % QUOTES.length];
 };
 
 const getStreak = () => {
@@ -90,7 +159,7 @@ function Home() {
   const [copiedId, setCopiedId]           = useState(null);
   const [descBook, setDescBook]           = useState(null);
   const [streak, setStreak]               = useState(getStreak);
-  const [quote, setQuote]                 = useState(() => getCachedQuote() || _quoteFallback);
+  const quote                              = getDailyQuote();
 
   const searchRef = useRef(null);
   const inputRef  = useRef(null);
@@ -100,20 +169,6 @@ function Home() {
     const onStorage = () => { setRecent(getRecentReading()); setStreak(getStreak()); };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  useEffect(() => {
-    if (getCachedQuote()) return;
-    const ctrl = new AbortController();
-    fetch("https://zenquotes.io/api/random", { signal: ctrl.signal })
-      .then((r) => r.json())
-      .then((data) => {
-        const q = { text: data[0].q, author: data[0].a };
-        localStorage.setItem(_quoteKey, JSON.stringify(q));
-        setQuote(q);
-      })
-      .catch((e) => { if (e.name !== "AbortError") setQuote(_quoteFallback); });
-    return () => ctrl.abort();
   }, []);
 
   useEffect(() => {
